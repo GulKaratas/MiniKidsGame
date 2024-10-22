@@ -15,6 +15,8 @@ class GameScene: SKScene {
     
     var animationFlyBalloon : LottieAnimationView!
     
+    var playIconSprite: SKSpriteNode!
+    
     override func didMove(to view: SKView) {
         
         // `SKView`'i güvenli şekilde unwrap ediyoruz
@@ -31,7 +33,7 @@ class GameScene: SKScene {
         skView.addSubview(animationTiger)
         
         // Balloon Fly Animasyonu
-        animationFlyBalloon = LottieAnimationView(name: "AnimationFlyBallon") // Balloon JSON animasyonu
+        animationFlyBalloon = LottieAnimationView(name: "AnimationFlyBallonn") // Balloon JSON animasyonu
         animationFlyBalloon.frame = CGRect(x: 0, y: 0, width: 300, height: 300)
         animationFlyBalloon.center = CGPoint(x: skView.bounds.midX + 120, y: skView.bounds.midY + 50) // Pozisyonlama
         animationFlyBalloon.loopMode = .loop
@@ -39,27 +41,29 @@ class GameScene: SKScene {
         
         // Balloon animasyonunu SKView'e ekle
         skView.addSubview(animationFlyBalloon)
-        // Buton Oluşturma
-        let forwardButton = UIButton(type: .system)
-        forwardButton.frame = CGRect(x: 0, y: 0, width: 50, height: 50)
-        forwardButton.center = CGPoint(x: animationFlyBalloon.center.x, y: animationFlyBalloon.center.y) // Balonun merkezine yerleştirir
-        forwardButton.backgroundColor = UIColor.clear
         
-        // İleri sarma simgesi
-        let forwardIcon = UIImage(systemName: "forward.fill")
-        forwardButton.setImage(forwardIcon, for: .normal)
+        // Buton Oluşturma
+        let playButton = UIButton(type: .system)
+        playButton.frame = CGRect(x: 0, y: 0, width: 50, height: 50)
+        playButton.center = CGPoint(x: animationFlyBalloon.center.x , y: animationFlyBalloon.center.y - 80) // Balonun merkezine yerleştirir
+        playButton.backgroundColor = UIColor.clear
+        
+        // Play icon (Unicode play symbol)
+        playButton.setTitle("\u{25B6}", for: .normal)
+        playButton.titleLabel?.font = UIFont.systemFont(ofSize: 70) // Set the font size
+        playButton.setTitleColor(.white, for: .normal) // Change color to orange
         
         // Butona işlev ekle
-        forwardButton.addTarget(self, action: #selector(forwardButtonTapped), for: .touchUpInside)
+        playButton.addTarget(self, action: #selector(playButtonTapped), for: .touchUpInside)
         
         // SKView'e buton ekle
-        skView.addSubview(forwardButton)
+        skView.addSubview(playButton)
         
     }
     
-    @objc func forwardButtonTapped() {
+    @objc func playButtonTapped() {
         // Butona basıldığında yapılacak işlemler
-        print("İleri sarma butonuna tıklandı!")
+        print("Play butonuna tıklandı!")
     }
     
     func touchDown(atPoint pos : CGPoint) {
@@ -94,8 +98,5 @@ class GameScene: SKScene {
     override func update(_ currentTime: TimeInterval) {
         
     }
-    
-    
-    
     
 }
