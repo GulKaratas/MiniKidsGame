@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "sekiller.png",
+      "filename" : "Ekran Resmi 2024-10-30 15.29.19.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "sekiller@2x.png",
+      "filename" : "Ekran Resmi 2024-10-30 15.29.19@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "sekiller@3x.png",
+      "filename" : "Ekran Resmi 2024-10-30 15.29.19@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
