@@ -7,87 +7,95 @@
 
 import UIKit
 import SpriteKit
+import AVFoundation
 
 class ShapesScene: SKScene {
 
-    var backButton: UIButton!
+    var geriButonu: UIButton!
+    var sesEfektleri: [String: SKAction] = [:] // Her şekil için ses efektlerini saklamak için sözlük
 
     override func didMove(to view: SKView) {
-        // Create back button
-        createBackButton()
+        // Geri butonunu oluştur
+        geriButonuOlustur()
         
-        // Add shapes to the scene
-        addShapes()
+        // Sesleri yükle
+        sesEfektleriniYukle()
+        
+        // Şekilleri sırayla ekle
+        sekilleriSiraIleEkle()
     }
 
-    func createBackButton() {
+    func geriButonuOlustur() {
         guard let view = self.view else { return }
         
-        let background = SKSpriteNode(imageNamed: "bulutluBackground")
-        background.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
-        background.zPosition = -1
-        background.size = self.size
-        addChild(background)
+        let arkaPlan = SKSpriteNode(imageNamed: "bulutluBackground")
+        arkaPlan.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
+        arkaPlan.zPosition = -1
+        arkaPlan.size = self.size
+        addChild(arkaPlan)
         
-        // Add a transparent overlay to dim the background
-        let overlay = SKSpriteNode(color: UIColor.white.withAlphaComponent(0.9), size: self.size)
-        overlay.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
-        overlay.zPosition = 0
-        addChild(overlay)
+        // Arka plana yarı saydam bir katman ekle
+        let katman = SKSpriteNode(color: UIColor.white.withAlphaComponent(0.9), size: self.size)
+        katman.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
+        katman.zPosition = 0
+        addChild(katman)
         
-        // Initialize back button
-        backButton = UIButton(type: .custom)
-        backButton.setImage(UIImage(named: "backButton"), for: .normal)
-        backButton.frame = CGRect(x: 20, y: 20, width: 50, height: 50)
-        backButton.layer.cornerRadius = 25
-        backButton.clipsToBounds = true
-        backButton.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
-        view.addSubview(backButton)
+        // Geri butonunu başlat
+        geriButonu = UIButton(type: .custom)
+        geriButonu.setImage(UIImage(named: "backButton"), for: .normal)
+        geriButonu.frame = CGRect(x: 20, y: 20, width: 50, height: 50)
+        geriButonu.layer.cornerRadius = 25
+        geriButonu.clipsToBounds = true
+        geriButonu.addTarget(self, action: #selector(geriButonuTiklandi), for: .touchUpInside)
+        view.addSubview(geriButonu)
     }
 
-    @objc func backButtonTapped() {
-        let nextScene = NextScene(size: self.size)
-        nextScene.scaleMode = .aspectFill
-        self.view?.presentScene(nextScene, transition: SKTransition.fade(withDuration: 1.0))
-        backButton.removeFromSuperview()
+    @objc func geriButonuTiklandi() {
+        let sonrakiSahne = NextScene(size: self.size)
+        sonrakiSahne.scaleMode = .aspectFill
+        self.view?.presentScene(sonrakiSahne, transition: SKTransition.fade(withDuration: 1.0))
+        geriButonu.removeFromSuperview()
     }
     
-    func addShapes() {
-        // Load shape images and place them in positions along the top and bottom edges
-        let shapes = ["kare", "daire", "yildiz", "ucgen"]
-
-        // Define Y positions for the top and bottom rows
-        let topY = self.size.height * 0.75    // Top row position (3/4 from the bottom)
-        let bottomY = self.size.height * 0.25 // Bottom row position (1/4 from the bottom)
-        
-        // X offsets for left and right positions
-        let leftX = self.size.width * 0.25   // Left position (1/4 from the left)
-        let rightX = self.size.width * 0.75  // Right position (3/4 from the left)
-        
-        // Create and position each shape
-        let topLeftShape = SKSpriteNode(imageNamed: shapes[0])
-        topLeftShape.position = CGPoint(x: leftX, y: topY)
-        topLeftShape.zPosition = 1
-        addChild(topLeftShape)
-        
-        let topRightShape = SKSpriteNode(imageNamed: shapes[1])
-        topRightShape.position = CGPoint(x: rightX, y: topY)
-        topRightShape.zPosition = 1
-        addChild(topRightShape)
-        
-        let bottomLeftShape = SKSpriteNode(imageNamed: shapes[2])
-        bottomLeftShape.position = CGPoint(x: leftX, y: bottomY)
-        bottomLeftShape.zPosition = 1
-        addChild(bottomLeftShape)
-        
-        let bottomRightShape = SKSpriteNode(imageNamed: shapes[3])
-        bottomRightShape.position = CGPoint(x: rightX, y: bottomY)
-        bottomRightShape.zPosition = 1
-        addChild(bottomRightShape)
+    func sesEfektleriniYukle() {
+        // Her şekil için ses dosyalarını yükleyin
+        sesEfektleri["kare"] = SKAction.playSoundFileNamed("kareSes", waitForCompletion: false)
+        sesEfektleri["daire"] = SKAction.playSoundFileNamed("daireSes", waitForCompletion: false)
+        sesEfektleri["yildiz"] = SKAction.playSoundFileNamed("yildizSes", waitForCompletion: false)
+        sesEfektleri["ucgen"] = SKAction.playSoundFileNamed("ucgenSes", waitForCompletion: false)
     }
 
+    func sekilleriSiraIleEkle() {
+        // Şekil isimleri ve konum bilgilerini liste halinde tanımlayın
+        let sekilBilgileri = [
+            (isim: "kare", x: self.size.width * 0.25, y: self.size.height * 0.75),
+            (isim: "yildiz", x: self.size.width * 0.75, y: self.size.height * 0.75),
+            (isim: "daire", x: self.size.width * 0.25, y: self.size.height * 0.25),
+            (isim: "ucgen", x: self.size.width * 0.75, y: self.size.height * 0.25)
+        ]
+        
+        // Her şekli sırayla eklemek için zamanlamalı bir döngü başlatın
+        for (index, sekil) in sekilBilgileri.enumerated() {
+            let beklemeSuresi = Double(index) * 0.2 // Her şekil için 1.5 saniye aralık bırak
+            run(SKAction.wait(forDuration: beklemeSuresi)) { [weak self] in
+                self?.sekilEkleVeSesCal(sekil.isim, x: sekil.x, y: sekil.y)
+            }
+        }
+    }
+    
+    func sekilEkleVeSesCal(_ isim: String, x: CGFloat, y: CGFloat) {
+        let sekilNode = SKSpriteNode(imageNamed: isim)
+        sekilNode.position = CGPoint(x: x, y: y)
+        sekilNode.zPosition = 1
+        addChild(sekilNode)
+        
+        // Şekil belirirken ilgili sesi çal
+        if let ses = sesEfektleri[isim] {
+            sekilNode.run(ses)
+        }
+    }
 
     override func willMove(from view: SKView) {
-        backButton.removeFromSuperview()
+        geriButonu.removeFromSuperview()
     }
 }
