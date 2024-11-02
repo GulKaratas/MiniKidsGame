@@ -3,17 +3,19 @@ import SpriteKit
 import AVFoundation
 
 class ShapesScene: SKScene {
-
     var geriButonu: UIButton!
     var sesEfektleri: [String: SKAction] = [:]
-    var daireDunya: SKSpriteNode!
-    var seciliSekil: SKSpriteNode?
-    var isDaireDunyaMatched = false // Flag to check if the match has occurred
+    var dogruSesEfekti: SKAction!
+    
+    var currentImage: SKSpriteNode?
+    var imageNames = ["daireDunya", "kareBiskuvi", "ucgenCetvel", "yildiz1"]
+    var imagesNode: SKSpriteNode!
+    var initialImagePosition: CGPoint?
 
     override func didMove(to view: SKView) {
         geriButonuOlustur()
         sesEfektleriniYukle()
-        sekilleriSiraIleEkleVeOrtadakiResmiEfektleEkle()
+        sekilleriSiraIleEkle()
     }
 
     func geriButonuOlustur() {
@@ -45,15 +47,16 @@ class ShapesScene: SKScene {
         self.view?.presentScene(sonrakiSahne, transition: SKTransition.fade(withDuration: 1.0))
         geriButonu.removeFromSuperview()
     }
-    
+
     func sesEfektleriniYukle() {
         sesEfektleri["kare"] = SKAction.playSoundFileNamed("suDamlasi", waitForCompletion: false)
         sesEfektleri["daire"] = SKAction.playSoundFileNamed("suDamlasi", waitForCompletion: false)
         sesEfektleri["yildiz"] = SKAction.playSoundFileNamed("suDamlasi", waitForCompletion: false)
         sesEfektleri["ucgen"] = SKAction.playSoundFileNamed("suDamlasi", waitForCompletion: false)
+        dogruSesEfekti = SKAction.playSoundFileNamed("suDamlasi2", waitForCompletion: false) // Doğru eşleşme sesi
     }
 
-    func sekilleriSiraIleEkleVeOrtadakiResmiEfektleEkle() {
+    func sekilleriSiraIleEkle() {
         let sekilBilgileri = [
             (isim: "kare", x: self.size.width * 0.25, y: self.size.height * 0.75),
             (isim: "yildiz", x: self.size.width * 0.75, y: self.size.height * 0.75),
@@ -68,12 +71,12 @@ class ShapesScene: SKScene {
             }
         }
         
-        let toplamBeklemeSuresi = Double(sekilBilgileri.count) * 0.2 + 0.5
+        let toplamBeklemeSuresi = Double(sekilBilgileri.count) * 0.2
         run(SKAction.wait(forDuration: toplamBeklemeSuresi)) { [weak self] in
-            self?.ortadakiResmiEfektleEkle()
+            self?.rastgeleResimEkleEfektli()
         }
     }
-
+    
     func sekilEkleVeSesCal(_ isim: String, x: CGFloat, y: CGFloat) {
         let sekilNode = SKSpriteNode(imageNamed: isim)
         sekilNode.position = CGPoint(x: x, y: y)
@@ -85,74 +88,98 @@ class ShapesScene: SKScene {
             sekilNode.run(ses)
         }
     }
-    
-    func ortadakiResmiEfektleEkle() {
-        daireDunya = SKSpriteNode(imageNamed: "daireDunya")
-        daireDunya.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
-        daireDunya.zPosition = 2
-        daireDunya.alpha = 0
-        daireDunya.setScale(0.5)
-        daireDunya.name = "daireDunya"
-        addChild(daireDunya)
+
+    func rastgeleResimEkleEfektli() {
+        if imageNames.isEmpty { return }
         
-        let fadeIn = SKAction.fadeIn(withDuration: 0.5)
-        let scaleUp = SKAction.scale(to: 1.0, duration: 0.5)
-        let efekt = SKAction.group([fadeIn, scaleUp])
+        let randomIndex = Int(arc4random_uniform(UInt32(imageNames.count)))
+        let imageName = imageNames.remove(at: randomIndex)
         
-        daireDunya.run(efekt)
+        imagesNode = SKSpriteNode(imageNamed: imageName)
+        imagesNode.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
+        imagesNode.zPosition = 2
+        imagesNode.alpha = 0
+        imagesNode.name = imageName
+        addChild(imagesNode)
+        
+        let fadeInAction = SKAction.fadeIn(withDuration: 1.0)
+        imagesNode.run(fadeInAction)
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let touch = touches.first {
             let location = touch.location(in: self)
-            if daireDunya.contains(location) && !isDaireDunyaMatched { // Check if daireDunya is matched
-                seciliSekil = daireDunya
+            if let node = atPoint(location) as? SKSpriteNode {
+                if node == imagesNode {
+                    currentImage = node
+                    initialImagePosition = node.position // Başlangıç konumunu kaydet
+                }
             }
         }
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let touch = touches.first, let sekil = seciliSekil, !isDaireDunyaMatched { // Restrict movement if matched
+        if let touch = touches.first, let imageNode = currentImage {
             let location = touch.location(in: self)
-            sekil.position = location
+            imageNode.position = location
         }
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let sekil = seciliSekil else { return }
-        
-        if let daireSekil = childNode(withName: "daire"), daireSekil.contains(sekil.position) {
-            // Snap daireDunya to the center of daire
-            daireDunya.position = CGPoint(x: daireSekil.position.x, y: daireSekil.position.y)
-            daireDunya.texture = sekil.texture
-            
-            let dogruSes = SKAction.playSoundFileNamed("suDamlasi3", waitForCompletion: false)
-            sekil.run(dogruSes)
-            
-            let fadeOut = SKAction.fadeOut(withDuration: 0.3)
-            let scaleDown = SKAction.scale(to: 0.5, duration: 0.3)
-            let group = SKAction.group([fadeOut, scaleDown])
-            
-            daireDunya.run(group) { [weak self] in
-                self?.daireDunya.alpha = 0
-                self?.daireDunya.setScale(1.0)
-                self?.daireDunya.alpha = 1
+        if let touch = touches.first, let imageNode = currentImage {
+            let location = touch.location(in: self)
+            checkForMatch(at: location, imageNode: imageNode)
+        }
+        currentImage = nil
+    }
+    
+    func checkForMatch(at location: CGPoint, imageNode: SKSpriteNode) {
+        let shapes = children.filter { $0 is SKSpriteNode && $0.zPosition == 1 }
+        var matched = false
+
+        for shape in shapes {
+            if shape.contains(location) {
+                let shapeName = shape.name ?? ""
+                if isMatching(shapeName: shapeName, imageName: imageNode.name) {
+                    print("Eşleşti!")
+                    shape.removeFromParent()
+                    imageNode.removeFromParent()
+                    run(dogruSesEfekti) // Doğru eşleşme sesini çal
+                    rastgeleResimEkleEfektli()
+                    matched = true
+                    break
+                }
             }
-            isDaireDunyaMatched = true // Set matched flag
-        } else {
+        }
+
+        if !matched {
             let shakeAction = SKAction.sequence([
                 SKAction.moveBy(x: -10, y: 0, duration: 0.1),
-                SKAction.moveBy(x: 10, y: 0, duration: 0.1),
+                SKAction.moveBy(x: 20, y: 0, duration: 0.1),
+                SKAction.moveBy(x: -20, y: 0, duration: 0.1),
+                SKAction.moveBy(x: 20, y: 0, duration: 0.1),
                 SKAction.moveBy(x: -10, y: 0, duration: 0.1),
-                SKAction.moveBy(x: 10, y: 0, duration: 0.1)
+                SKAction.move(to: initialImagePosition ?? CGPoint.zero, duration: 0.2) // Eski konuma dön
             ])
-            
-            let geriDonus = SKAction.move(to: CGPoint(x: self.size.width / 2, y: self.size.height / 2), duration: 0.3)
-            let combinedAction = SKAction.sequence([shakeAction, geriDonus])
-            daireDunya.run(combinedAction)
+            imageNode.run(shakeAction) // Yanlış eşleşme sallama ve geri dönme hareketi
+            print("Yanlış eşleşme!")
         }
-        
-        seciliSekil = nil // Clear selection
+    }
+    
+    func isMatching(shapeName: String, imageName: String?) -> Bool {
+        guard let imageName = imageName else { return false }
+        switch shapeName {
+        case "daire":
+            return imageName == "daireDunya"
+        case "kare":
+            return imageName == "kareBiskuvi"
+        case "ucgen":
+            return imageName == "ucgenCetvel"
+        case "yildiz":
+            return imageName == "yildiz1"
+        default:
+            return false
+        }
     }
 
     override func willMove(from view: SKView) {
