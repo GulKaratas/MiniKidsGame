@@ -40,7 +40,7 @@ class NextScene: SKScene {
         ]
         
         // Button images
-        let buttonImages = ["sekiller", "number", "hayvanlar", "meyveler", "renkler", "sıralama"]
+        let buttonImages = ["sekillerButton", "number", "hayvanlar", "meyveler", "renkler", "sıralama"]
         
         for (index, imageName) in buttonImages.enumerated() {
             let button = createRoundedButton(imageName: imageName, position: positions[index], size: buttonSize)
