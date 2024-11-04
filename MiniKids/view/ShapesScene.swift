@@ -1,6 +1,7 @@
 import UIKit
 import SpriteKit
 import AVFoundation
+import Lottie
 
 class ShapesScene: SKScene {
     var geriButonu: UIButton!
