@@ -20,7 +20,8 @@ class ShapesScene: SKScene {
     var imagesNode: SKSpriteNode!
     var initialImagePosition: CGPoint?
     var matchedShapesCount = 0
-
+    var animationView: LottieAnimationView?
+    
     override func didMove(to view: SKView) {
         geriButonuOlustur()
         sesEfektleriniYukle()
@@ -66,26 +67,26 @@ class ShapesScene: SKScene {
     }
 
     func sekilleriSiraIleEkle() {
-        matchedShapesCount = 0
-        let sekilBilgileri = [
-            (isim: "kare", x: self.size.width * 0.25, y: self.size.height * 0.75),
-            (isim: "yildiz", x: self.size.width * 0.75, y: self.size.height * 0.75),
-            (isim: "daire", x: self.size.width * 0.25, y: self.size.height * 0.25),
-            (isim: "ucgen", x: self.size.width * 0.75, y: self.size.height * 0.25)
-        ]
-        
-        for (index, sekil) in sekilBilgileri.enumerated() {
-            let beklemeSuresi = Double(index) * 0.2
-            run(SKAction.wait(forDuration: beklemeSuresi)) { [weak self] in
-                self?.sekilEkleVeSesCal(sekil.isim, x: sekil.x, y: sekil.y)
-            }
-        }
-        
-        let toplamBeklemeSuresi = Double(sekilBilgileri.count) * 0.2
-        run(SKAction.wait(forDuration: toplamBeklemeSuresi)) { [weak self] in
-            self?.rastgeleResimEkleEfektli()
-        }
-    }
+           matchedShapesCount = 0
+           let sekilBilgileri = [
+               (isim: "kare", x: self.size.width * 0.25, y: self.size.height * 0.75),
+               (isim: "yildiz", x: self.size.width * 0.75, y: self.size.height * 0.75),
+               (isim: "daire", x: self.size.width * 0.25, y: self.size.height * 0.25),
+               (isim: "ucgen", x: self.size.width * 0.75, y: self.size.height * 0.25)
+           ]
+           
+           for (index, sekil) in sekilBilgileri.enumerated() {
+               let beklemeSuresi = Double(index) * 0.2
+               run(SKAction.wait(forDuration: beklemeSuresi)) { [weak self] in
+                   self?.sekilEkleVeSesCal(sekil.isim, x: sekil.x, y: sekil.y)
+               }
+           }
+           
+           let toplamBeklemeSuresi = Double(sekilBilgileri.count) * 0.2
+           run(SKAction.wait(forDuration: toplamBeklemeSuresi)) { [weak self] in
+               self?.rastgeleResimEkleEfektli()
+           }
+       }
     
     func sekilEkleVeSesCal(_ isim: String, x: CGFloat, y: CGFloat) {
         let sekilNode = SKSpriteNode(imageNamed: isim)
@@ -185,26 +186,65 @@ class ShapesScene: SKScene {
 
 
     func startNextCycle() {
-           currentCycle = (currentCycle + 1) % imageNames.count
-           imageNames[currentCycle] = ["daireKurabiye", "kareCerceve", "ucgenKarpuz", "yildizCicek"]
+           currentCycle += 1
            
-           // Update the images for the new cycle
-           if currentCycle == 1 {
-               imageNames[currentCycle] = ["daireKurabiye", "kareCerceve", "ucgenKarpuz", "yildizCicek"]
-           } else if currentCycle == 2 {
-               imageNames[currentCycle] = ["daireMeyve", "kareCikolata", "ucgenLed", "yildizDeniz"]
-           } else if currentCycle == 3 {
-               imageNames[currentCycle] = ["daireSaat","kareKutu","ucgenLevha","yildizKurabiye"]
-           } else if currentCycle == 4 {
-               imageNames[currentCycle] = ["daireFootball","kareTablo","ucgenPizza","yildizSet"]
-           }
-           
-           matchedShapesCount = 0
-           
-           run(SKAction.wait(forDuration: 0.5)) { [weak self] in
-               self?.sekilleriSiraIleEkle()
+           if currentCycle >= imageNames.count {
+               showLottieAnimation()
+           } else {
+               imageNames[currentCycle] = imageNames[currentCycle] // Assign new cycle images
+               
+               matchedShapesCount = 0
+               run(SKAction.wait(forDuration: 0.5)) { [weak self] in
+                   self?.sekilleriSiraIleEkle()
+               }
            }
        }
+    func showLottieAnimation() {
+        // Create and configure Lottie animation view
+        animationView = LottieAnimationView(name: "AnimationYildiz") // Replace with your Lottie animation name
+        guard let animationView = animationView, let view = self.view else { return }
+
+        // Set frame to center in view
+        animationView.frame = view.bounds
+        animationView.contentMode = .scaleAspectFit
+        animationView.loopMode = .loop // Set to loop continuously
+        animationView.center = view.center
+
+        // Add the animation view to the main view
+        view.addSubview(animationView)
+
+        // Hide the back button initially
+        geriButonu.isHidden = true
+        geriButonu.isUserInteractionEnabled = false
+
+        // Play animation
+        animationView.play()
+
+        // Show the back button after a delay (adjust as needed)
+        let delayInSeconds: TimeInterval = 2.0 // Set this to the delay duration you want
+        DispatchQueue.main.asyncAfter(deadline: .now() + delayInSeconds) {
+            self.geriButonu.isHidden = false
+            self.geriButonu.isUserInteractionEnabled = true
+            view.bringSubviewToFront(self.geriButonu)
+        }
+    }
+
+
+
+
+       func resetGame() {
+           currentCycle = 0
+           matchedShapesCount = 0
+           imageNames = [
+               ["daireDunya", "kareBiskuvi", "ucgenCetvel", "yildiz1"],
+               ["daireKurabiye", "kareCerceve", "ucgenKarpuz", "yildizCicek"],
+               ["daireMeyve", "kareCikolata", "ucgenLed", "yildizDeniz"],
+               ["daireSaat", "kareKutu", "ucgenLevha", "yildizKurabiye"],
+               ["daireFootball", "kareTablo", "ucgenPizza", "yildizSet"]
+           ]
+           sekilleriSiraIleEkle()
+       }
+
 
        func isMatching(shapeName: String, imageName: String?) -> Bool {
            guard let imageName = imageName else { return false }
@@ -224,5 +264,6 @@ class ShapesScene: SKScene {
    
     override func willMove(from view: SKView) {
         geriButonu.removeFromSuperview()
+        animationView?.removeFromSuperview()
     }
 }
