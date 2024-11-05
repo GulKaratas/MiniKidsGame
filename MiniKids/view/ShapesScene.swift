@@ -138,7 +138,7 @@ class ShapesScene: SKScene {
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let touch = touches.first, let imageNode = currentImage {
             let location = touch.location(in: self)
-            // Eşleşmeyi kontrol et
+            
             checkForMatch(at: location, imageNode: imageNode)
         }
         currentImage = nil
@@ -200,17 +200,16 @@ class ShapesScene: SKScene {
            }
        }
     func showLottieAnimation() {
-        // Create and configure Lottie animation view
-        animationView = LottieAnimationView(name: "AnimationYildiz") // Replace with your Lottie animation name
+        
+        animationView = LottieAnimationView(name: "AnimationYildiz")
         guard let animationView = animationView, let view = self.view else { return }
 
-        // Set frame to center in view
         animationView.frame = view.bounds
         animationView.contentMode = .scaleAspectFit
         animationView.loopMode = .loop // Set to loop continuously
         animationView.center = view.center
 
-        // Add the animation view to the main view
+        
         view.addSubview(animationView)
 
         // Hide the back button initially
@@ -220,8 +219,7 @@ class ShapesScene: SKScene {
         // Play animation
         animationView.play()
 
-        // Show the back button after a delay (adjust as needed)
-        let delayInSeconds: TimeInterval = 2.0 // Set this to the delay duration you want
+        let delayInSeconds: TimeInterval = 2.0
         DispatchQueue.main.asyncAfter(deadline: .now() + delayInSeconds) {
             self.geriButonu.isHidden = false
             self.geriButonu.isUserInteractionEnabled = true
