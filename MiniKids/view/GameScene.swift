@@ -27,6 +27,7 @@ class GameScene: SKScene {
         animationTiger.frame = CGRect(x: 0, y: 0, width: 300, height: 300)
         animationTiger.center = CGPoint(x: skView.bounds.midX - 120, y: skView.bounds.midY + 50)
         animationTiger.loopMode = .loop
+        
         animationTiger.play()
         skView.addSubview(animationTiger)
     }
@@ -74,8 +75,14 @@ class GameScene: SKScene {
     }
     
     // Touch methods can be left empty or removed if not needed
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {}
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {}
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {for touch in touches {
+        let touchLocation = touch.location(in: self)
+        GlowEffectManager.createGlowEffect(at: touchLocation, in: self)
+    }}
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) { for touch in touches {
+        let touchLocation = touch.location(in: self)
+        GlowEffectManager.createGlowEffect(at: touchLocation, in: self)
+    }}
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {}
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {}
     override func update(_ currentTime: TimeInterval) {}

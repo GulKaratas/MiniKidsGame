@@ -2,6 +2,7 @@ import UIKit
 import SpriteKit
 import AVFoundation
 import Lottie
+import GameplayKit
 
 class ShapesScene: SKScene {
     var geriButonu: UIButton!
@@ -100,38 +101,48 @@ class ShapesScene: SKScene {
         }
     }
 
+    
+
     func rastgeleResimEkleEfektli() {
         if imageNames[currentCycle].isEmpty { return }
-        
-        let randomIndex = Int(arc4random_uniform(UInt32(imageNames[currentCycle].count)))
+
+        // GameplayKit random number generator
+        let randomSource = GKRandomSource.sharedRandom()
+        let randomIndex = randomSource.nextInt(upperBound: imageNames[currentCycle].count)
         let imageName = imageNames[currentCycle].remove(at: randomIndex)
-        
+
         imagesNode = SKSpriteNode(imageNamed: imageName)
         imagesNode.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         imagesNode.zPosition = 2
         imagesNode.alpha = 0
         imagesNode.name = imageName
         addChild(imagesNode)
-        
+
         let fadeInAction = SKAction.fadeIn(withDuration: 1.0)
         imagesNode.run(fadeInAction)
     }
+
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let touch = touches.first {
             let location = touch.location(in: self)
-            // Yalnızca imagesNode'a dokunulduğunda currentImage olarak ayarlıyoruz
-            if imagesNode.contains(location) {
+            
+            // Safely check if imagesNode is non-nil before accessing it
+            if let imagesNode = imagesNode, imagesNode.contains(location) {
+                // Only set currentImage if imagesNode contains the touch location
                 currentImage = imagesNode
                 initialImagePosition = imagesNode.position
             }
         }
     }
 
+
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let touch = touches.first, let imageNode = currentImage {
             let location = touch.location(in: self)
             // Dokunulan konumu takip etmek için imagesNode'u hareket ettiriyoruz
             imageNode.position = location
+            
+            GlowEffectManager.createGlowEffect(at: location, in: self)
         }
     }
 
@@ -197,10 +208,10 @@ class ShapesScene: SKScene {
                run(SKAction.wait(forDuration: 0.5)) { [weak self] in
                    self?.sekilleriSiraIleEkle()
                }
+               
            }
        }
     func showLottieAnimation() {
-        
         animationView = LottieAnimationView(name: "AnimationYildiz")
         guard let animationView = animationView, let view = self.view else { return }
 
@@ -208,26 +219,17 @@ class ShapesScene: SKScene {
         animationView.contentMode = .scaleAspectFit
         animationView.loopMode = .loop // Set to loop continuously
         animationView.center = view.center
-
         
         view.addSubview(animationView)
 
-        // Hide the back button initially
-        geriButonu.isHidden = true
-        geriButonu.isUserInteractionEnabled = false
+        // Ensure back button is always visible and interactive
+        geriButonu.isHidden = false
+        geriButonu.isUserInteractionEnabled = true
+        view.bringSubviewToFront(geriButonu)
 
         // Play animation
         animationView.play()
-
-        let delayInSeconds: TimeInterval = 2.0
-        DispatchQueue.main.asyncAfter(deadline: .now() + delayInSeconds) {
-            self.geriButonu.isHidden = false
-            self.geriButonu.isUserInteractionEnabled = true
-            view.bringSubviewToFront(self.geriButonu)
-        }
     }
-
-
 
 
        func resetGame() {

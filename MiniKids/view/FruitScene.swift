@@ -13,14 +13,14 @@ class FruitScene: SKScene {
 
     override func didMove(to view: SKView) {
        
-        let background = SKSpriteNode(imageNamed: "beachBackground")
+        let background = SKSpriteNode(imageNamed: "meyveBackground")
         background.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         background.zPosition = -1
         background.size = self.size
         addChild(background)
         
         // Add a transparent overlay to dim the background
-        let overlay = SKSpriteNode(color: UIColor.white.withAlphaComponent(0.5), size: self.size)
+        let overlay = SKSpriteNode(color: UIColor.white.withAlphaComponent(0.9), size: self.size)
         overlay.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         overlay.zPosition = 0
         addChild(overlay)
@@ -49,7 +49,13 @@ class FruitScene: SKScene {
         // Butonu görünüme ekle
         view.addSubview(backButton)
     }
-
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+            guard let touch = touches.first else { return }
+            let location = touch.location(in: self)
+            
+            // Check if mouse is hovering over any button
+        GlowEffectManager.createGlowEffect(at: location, in: self)
+        }
     @objc func backButtonTapped() {
         // NextScene'e geri dön
         let nextScene = NextScene(size: self.size)

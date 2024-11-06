@@ -13,14 +13,14 @@ class NumberScene: SKScene {
 
     override func didMove(to view: SKView) {
         
-        let background = SKSpriteNode(imageNamed: "beachBackground")
+        let background = SKSpriteNode(imageNamed: "sayiBackground")
         background.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         background.zPosition = -1
         background.size = self.size
         addChild(background)
         
         // Add a transparent overlay to dim the background
-        let overlay = SKSpriteNode(color: UIColor.white.withAlphaComponent(0.5), size: self.size)
+        let overlay = SKSpriteNode(color: UIColor.white.withAlphaComponent(0.9), size: self.size)
         overlay.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         overlay.zPosition = 0
         addChild(overlay)
@@ -58,7 +58,13 @@ class NumberScene: SKScene {
         // Geçiş yapıldığında butonu görünümden kaldır
         backButton.removeFromSuperview()
     }
-    
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+            guard let touch = touches.first else { return }
+            let location = touch.location(in: self)
+            
+            // Check if mouse is hovering over any button
+        GlowEffectManager.createGlowEffect(at: location, in: self)
+        }
     override func willMove(from view: SKView) {
         // Scene'den çıkarken butonun kaldırıldığından emin olun
         backButton.removeFromSuperview()

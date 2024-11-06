@@ -40,7 +40,7 @@ class NextScene: SKScene {
         ]
         
         // Button images
-        let buttonImages = ["sekillerButton", "number", "hayvanlar", "meyveler", "renkler", "sıralama"]
+        let buttonImages = ["sekillerButton", "numberButton", "hayvanlarButton", "meyveButton", "renkler", "sıralama"]
         
         for (index, imageName) in buttonImages.enumerated() {
             let button = createRoundedButton(imageName: imageName, position: positions[index], size: buttonSize)
@@ -80,6 +80,7 @@ class NextScene: SKScene {
         // Geçiş yapıldığında butonu görünümden kaldır
         backButton.removeFromSuperview()
     }
+    
     
     override func willMove(from view: SKView) {
         // Scene'den çıkarken butonun kaldırıldığından emin olun
@@ -135,4 +136,11 @@ class NextScene: SKScene {
         scene.scaleMode = .aspectFill
         self.view?.presentScene(scene, transition: SKTransition.fade(withDuration: 1.0))
     }
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+            guard let touch = touches.first else { return }
+            let location = touch.location(in: self)
+            
+            // Check if mouse is hovering over any button
+        GlowEffectManager.createGlowEffect(at: location, in: self)
+        }
 }
