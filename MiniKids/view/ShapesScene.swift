@@ -38,7 +38,7 @@ class ShapesScene: SKScene {
         arkaPlan.size = self.size
         addChild(arkaPlan)
         
-        let katman = SKSpriteNode(color: UIColor.white.withAlphaComponent(0.7), size: self.size)
+        let katman = SKSpriteNode(color: UIColor.white.withAlphaComponent(0.2), size: self.size)
         katman.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         katman.zPosition = 0
         addChild(katman)
@@ -121,6 +121,7 @@ class ShapesScene: SKScene {
         let fadeInAction = SKAction.fadeIn(withDuration: 1.0)
         imagesNode.run(fadeInAction)
     }
+    
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let touch = touches.first {
