@@ -1,10 +1,3 @@
-//
-//  AnimalScene.swift
-//  MiniKids
-//
-//  Created by Gül Karataş on 30.10.2024.
-//
-
 import UIKit
 import SpriteKit
 
@@ -13,116 +6,187 @@ class AnimalScene: SKScene {
     var cardNodes: [CardNode] = []
     var flippedCards: [CardNode] = []
     var isCheckingMatch = false
+    var transitionMusic: SKAudioNode?
+    
+    var backgroundNode: SKSpriteNode! // Arka plan node'u değişkeni
+    var currentRound = 1
     
     override func didMove(to view: SKView) {
-        let background = SKSpriteNode(imageNamed: "farmBackground")
-        background.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
-        background.zPosition = -1
-        background.size = self.size
-        addChild(background)
+        setupBackground() // Arka planı ayarlayan fonksiyon çağrılıyor
+        createBackButton()
+        setupCards(forRound: currentRound)
+    }
+    
+    func setupBackground() {
+        // Arka plan nodu oluşturulup sahneye ekleniyor
+        backgroundNode = SKSpriteNode(imageNamed: "farmBackground")
+        backgroundNode.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
+        backgroundNode.zPosition = -1
+        backgroundNode.size = self.size
+        addChild(backgroundNode)
         
         let overlay = SKSpriteNode(color: UIColor.white.withAlphaComponent(0.7), size: self.size)
         overlay.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         overlay.zPosition = 0
         addChild(overlay)
-        
-        createBackButton()
-        setupCards()
     }
     
-    func setupCards() {
-        // Front images for the cards (animal images)
-        let cardImages = ["at", "kaplan", "tavuk", "kedi", "tavşan", "inek", "at", "kaplan", "tavuk", "kedi", "tavşan", "inek"]
-        var shuffledImages = cardImages.shuffled()
+    func setupCards(forRound round: Int) {
+        let cardImages: [String]
         
-        // Back images for the cards (card 1, card 2, etc.)
+        switch round {
+        case 1:
+            cardImages = ["at", "kaplan", "tavuk", "kedi", "tavşan", "inek", "at", "kaplan", "tavuk", "kedi", "tavşan", "inek"]
+        case 2:
+            cardImages = ["aslan", "ayı", "karga", "koala", "balık", "penguen", "aslan", "ayı", "karga", "koala", "balık", "penguen"]
+        case 3:
+            cardImages = ["balina", "çita", "fil", "ördek", "serçe", "sincap", "balina", "çita", "fil", "ördek", "serçe", "sincap"]
+        default:
+            cardImages = []
+        }
+        
+        var shuffledImages = cardImages.shuffled()
         var backImages = ["kart 1", "kart 2", "kart 3", "kart 4", "kart 5", "kart 6", "kart 7", "kart 8", "kart 9", "kart 10", "kart 11", "kart 12"]
-
+        
         let rows = 3
         let columns = 4
         let cardWidth: CGFloat = 160
         let cardHeight: CGFloat = 160
         let padding: CGFloat = 20
         
-        // Calculate the starting position to center the grid on the screen
         let totalWidth = CGFloat(columns) * (cardWidth + padding) - padding
         let totalHeight = CGFloat(rows) * (cardHeight + padding) - padding
         let startX = (self.size.width - totalWidth) / 2 + cardWidth / 2
         let startY = (self.size.height + totalHeight) / 2 - cardHeight / 2
 
         for row in 0..<rows {
-                for col in 0..<columns {
-                    let xPosition = startX + CGFloat(col) * (cardWidth + padding)
-                    let yPosition = startY - CGFloat(row) * (cardHeight + padding)
+            for col in 0..<columns {
+                let xPosition = startX + CGFloat(col) * (cardWidth + padding)
+                let yPosition = startY - CGFloat(row) * (cardHeight + padding)
 
-                    let frontImageName = shuffledImages.removeLast()
-                    let backImageName = backImages.removeLast()
+                let frontImageName = shuffledImages.removeLast()
+                let backImageName = backImages.removeLast()
 
-                    let card = CardNode(frontImageName: frontImageName, backImageName: backImageName)
-                    card.position = CGPoint(x: xPosition, y: yPosition)
-                    card.size = CGSize(width: cardWidth, height: cardHeight)
-                    card.alpha = 0  // Start invisible for fade-in effect
-                    card.zPosition = 1
-                    addChild(card)
-                    cardNodes.append(card)
+                let card = CardNode(frontImageName: frontImageName, backImageName: backImageName)
+                card.position = CGPoint(x: xPosition, y: yPosition)
+                card.size = CGSize(width: cardWidth, height: cardHeight)
+                card.alpha = 0
+                card.zPosition = 1
+                addChild(card)
+                cardNodes.append(card)
 
-                    // Add fade-in animation
-                    let fadeInAction = SKAction.fadeIn(withDuration: 0.5)
-                    let waitAction = SKAction.wait(forDuration: 0.1 * Double(row * columns + col)) // Staggered effect
-                    card.run(SKAction.sequence([waitAction, fadeInAction]))
+                let fadeInAction = SKAction.fadeIn(withDuration: 0.5)
+                let waitAction = SKAction.wait(forDuration: 0.1 * Double(row * columns + col))
+                card.run(SKAction.sequence([waitAction, fadeInAction]))
             }
         }
     }
 
-    
+    func addBounceEffect(to card: CardNode) {
+        let bounceUp = SKAction.scale(to: 1.2, duration: 0.1)
+        let bounceDown = SKAction.scale(to: 1.0, duration: 0.1)
+        let bounceSequence = SKAction.sequence([bounceUp, bounceDown])
+        card.run(bounceSequence)
+    }
+
     func flipCard(_ card: CardNode) {
-            // Prevent flipping another card if a match check is in progress or if two cards are already flipped
-            guard !isCheckingMatch, flippedCards.count < 2, !card.isFlipped else { return }
-            
-            // Flip the selected card
-            card.flip()
-            flippedCards.append(card)
-            
-            // If there are two flipped cards, check for a match
-            if flippedCards.count == 2 {
-                checkForMatch()
-            }
+        guard !isCheckingMatch, flippedCards.count < 2, !card.isFlipped else { return }
+        
+        addBounceEffect(to: card)
+        card.flip()
+        flippedCards.append(card)
+        
+        if flippedCards.count == 2 {
+            checkForMatch()
         }
-    
+    }
+
     func checkForMatch() {
-            let firstCard = flippedCards[0]
-            let secondCard = flippedCards[1]
-            
-            // Set flag to prevent further flips during match check
-            isCheckingMatch = true
-            
-            if firstCard.frontImageName == secondCard.frontImageName {
-                // Cards match
-                firstCard.matchFound()
-                secondCard.matchFound()
-                
-                // Add glow effect to matched cards
-                GlowEffectManager.createGlowOutlineEffect(around: firstCard, in: self)
-                GlowEffectManager.createGlowOutlineEffect(around: secondCard, in: self)
-                
-                // Clear flipped cards and reset flag
-                flippedCards.removeAll()
-                isCheckingMatch = false
-            } else {
-                // If cards don't match, flip them back after a delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    firstCard.flipBack()
-                    secondCard.flipBack()
-                    
-                    // Clear flipped cards and reset flag after flipping back
-                    self.flippedCards.removeAll()
-                    self.isCheckingMatch = false
-                }
+        let firstCard = flippedCards[0]
+        let secondCard = flippedCards[1]
+
+        isCheckingMatch = true
+
+        if firstCard.frontImageName == secondCard.frontImageName {
+            firstCard.matchFound()
+            secondCard.matchFound()
+            GlowEffectManager.createGlowOutlineEffect(around: firstCard, in: self)
+            GlowEffectManager.createGlowOutlineEffect(around: secondCard, in: self)
+
+            flippedCards.removeAll()
+            isCheckingMatch = false
+
+            // Check if all cards are matched
+            if cardNodes.allSatisfy({ $0.isMatched }) {
+                startTransitionMusic()
+                fillScreenWithAnimalFaces()
+            }
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                firstCard.flipBack()
+                secondCard.flipBack()
+                self.flippedCards.removeAll()
+                self.isCheckingMatch = false
             }
         }
+    }
 
+    func startTransitionMusic() {
+        guard transitionMusic == nil else { return }
+
+        // SKAudioNode'u doğrudan dosya adı ile başlatıyoruz
+        let musicNode = SKAudioNode(fileNamed: "musicGecis.mp3")
+        musicNode.autoplayLooped = true
+        addChild(musicNode)
+        transitionMusic = musicNode
+    }
+
+
+    func stopTransitionMusic() {
+        transitionMusic?.removeFromParent()
+        transitionMusic = nil
+    }
+
+    func resetCardsForNewRound() {
+        stopTransitionMusic()  // Stop the music when moving to the next round
+        
+        // Clear remaining cards and images from the previous round
+        self.children.filter { $0 is SKSpriteNode && ($0 as! SKSpriteNode).texture != nil && $0 != backgroundNode }.forEach { $0.removeFromParent() }
+        
+        cardNodes.removeAll()
+        flippedCards.removeAll()
+        
+        currentRound += 1
+        setupCards(forRound: currentRound)
+    }
 
     
+    func fillScreenWithAnimalFaces() {
+        let spawnAction = SKAction.repeat(SKAction.sequence([
+            SKAction.run { self.spawnAnimalFace() },
+            SKAction.wait(forDuration: 0.02)
+        ]), count: 200)
+
+        self.run(spawnAction) {
+            self.resetCardsForNewRound()
+        }
+    }
+
+    func spawnAnimalFace() {
+        guard let randomCard = cardNodes.randomElement() else { return }
+        let animalFaceNode = SKSpriteNode(imageNamed: randomCard.frontImageName)
+        
+        let randomX = CGFloat.random(in: 0...self.size.width)
+        let randomY = CGFloat.random(in: 0...self.size.height)
+        animalFaceNode.position = CGPoint(x: randomX, y: randomY)
+        animalFaceNode.size = CGSize(width: 100, height: 100)
+        animalFaceNode.zPosition = 3
+        
+        addChild(animalFaceNode)
+    }
+
+
+
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
@@ -131,7 +195,7 @@ class AnimalScene: SKScene {
             flipCard(card)
         }
     }
-    
+
     func createBackButton() {
         guard let view = self.view else { return }
         backButton = UIButton(type: .custom)
@@ -149,8 +213,7 @@ class AnimalScene: SKScene {
         self.view?.presentScene(nextScene, transition: SKTransition.fade(withDuration: 1.0))
         backButton.removeFromSuperview()
     }
-    
-    
+
     override func willMove(from view: SKView) {
         backButton.removeFromSuperview()
     }
