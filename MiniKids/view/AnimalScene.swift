@@ -19,16 +19,13 @@ class AnimalScene: SKScene {
     
     func setupBackground() {
         // Arka plan nodu oluşturulup sahneye ekleniyor
-        backgroundNode = SKSpriteNode(imageNamed: "farmBackground")
+        backgroundNode = SKSpriteNode(imageNamed: "dunya")
         backgroundNode.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         backgroundNode.zPosition = -1
         backgroundNode.size = self.size
         addChild(backgroundNode)
         
-        let overlay = SKSpriteNode(color: UIColor.white.withAlphaComponent(0.7), size: self.size)
-        overlay.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
-        overlay.zPosition = 0
-        addChild(overlay)
+        
     }
     
     func setupCards(forRound round: Int) {
@@ -164,8 +161,8 @@ class AnimalScene: SKScene {
     func fillScreenWithAnimalFaces() {
         let spawnAction = SKAction.repeat(SKAction.sequence([
             SKAction.run { self.spawnAnimalFace() },
-            SKAction.wait(forDuration: 0.02)
-        ]), count: 200)
+            SKAction.wait(forDuration: 0.01)
+        ]), count: 300)
 
         self.run(spawnAction) {
             self.resetCardsForNewRound()

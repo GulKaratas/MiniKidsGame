@@ -32,13 +32,13 @@ class ShapesScene: SKScene {
     func geriButonuOlustur() {
         guard let view = self.view else { return }
         
-        let arkaPlan = SKSpriteNode(imageNamed: "bulutluBackground")
+        let arkaPlan = SKSpriteNode(imageNamed: "bulut 2")
         arkaPlan.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         arkaPlan.zPosition = -1
         arkaPlan.size = self.size
         addChild(arkaPlan)
         
-        let katman = SKSpriteNode(color: UIColor.white.withAlphaComponent(0.2), size: self.size)
+        let katman = SKSpriteNode(color: UIColor.white.withAlphaComponent(0.1), size: self.size)
         katman.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         katman.zPosition = 0
         addChild(katman)
