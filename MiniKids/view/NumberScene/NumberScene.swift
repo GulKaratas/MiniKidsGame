@@ -34,39 +34,93 @@ class NumberScene: SKScene {
     }
 
     func createBubbles() {
-        let bubbleSize = CGSize(width: 150, height: 150)
+        let bubbleSize = CGSize(width: 180, height: 180)
 
-        // Sol tarafa 5 baloncuk
-        for i in 0..<5 {
+        // Sol taraftaki arka baloncukların pozisyonları
+        let leftBackPositions: [CGPoint] = [
+            CGPoint(x: self.size.width * 0.2, y: self.size.height * 0.75), // Arka 1
+            CGPoint(x: self.size.width * 0.2, y: self.size.height * 0.55), // Arka 2
+            CGPoint(x: self.size.width * 0.2, y: self.size.height * 0.35)  // Arka 3
+        ]
+
+        // Sol taraftaki ön baloncukların pozisyonları
+        let leftFrontPositions: [CGPoint] = [
+            CGPoint(x: self.size.width * 0.3, y: self.size.height * 0.65), // Ön 1
+            CGPoint(x: self.size.width * 0.3, y: self.size.height * 0.45)  // Ön 2
+        ]
+
+        // Sağ taraftaki arka baloncukların pozisyonları
+        let rightBackPositions: [CGPoint] = [
+            CGPoint(x: self.size.width * 0.8, y: self.size.height * 0.75), // Arka 1
+            CGPoint(x: self.size.width * 0.8, y: self.size.height * 0.55), // Arka 2
+            CGPoint(x: self.size.width * 0.8, y: self.size.height * 0.35)  // Arka 3
+        ]
+
+        // Sağ taraftaki ön baloncukların pozisyonları
+        let rightFrontPositions: [CGPoint] = [
+            CGPoint(x: self.size.width * 0.7, y: self.size.height * 0.65), // Ön 1
+            CGPoint(x: self.size.width * 0.7, y: self.size.height * 0.45)  // Ön 2
+        ]
+
+        // Sol taraf için 3 arka baloncuk
+        for i in 0..<3 {
             let bubble = SKSpriteNode(imageNamed: "baloncuk \(i)")
-            bubble.name = "bubble-\(i)" // Baloncukları tanımlamak için isim veriyoruz
+            bubble.name = "bubble-\(i)"
             bubble.size = bubbleSize
-            bubble.position = CGPoint(x: self.size.width * 0.25, y: self.size.height * (CGFloat(i) + 1) / 6)
-            bubble.zPosition = 1
+            bubble.position = leftBackPositions[i] // Keeping the positions as they are
+            bubble.zPosition = 0 // Arka planda
             addChild(bubble)
-            
-            // Rastgele sayı görselini ekleyin
+
+            // Rastgele sayı görselini ekle
             addUniqueRandomNumber(to: bubble)
         }
 
-        // Sağ tarafa 5 baloncuk
-        for i in 5..<10 {
+        // Sol taraf için 2 ön baloncuk
+        for i in 3..<5 {
             let bubble = SKSpriteNode(imageNamed: "baloncuk \(i)")
-            bubble.name = "bubble-\(i)" // Baloncukları tanımlamak için isim veriyoruz
+            bubble.name = "bubble-\(i)"
             bubble.size = bubbleSize
-            bubble.position = CGPoint(x: self.size.width * 0.75, y: self.size.height * (CGFloat(i - 5) + 1) / 6)
-            bubble.zPosition = 1
+            bubble.position = leftFrontPositions[i - 3] // Keep the front bubbles aligned below
+            bubble.zPosition = 1 // Ön planda
             addChild(bubble)
-            
-            // Rastgele sayı görselini ekleyin
+
+            // Rastgele sayı görselini ekle
+            addUniqueRandomNumber(to: bubble)
+        }
+
+        // Sağ taraf için 3 arka baloncuk
+        for i in 5..<8 {
+            let bubble = SKSpriteNode(imageNamed: "baloncuk \(i)")
+            bubble.name = "bubble-\(i)"
+            bubble.size = bubbleSize
+            bubble.position = rightBackPositions[i - 5] // Keeping the positions as they are
+            bubble.zPosition = 0 // Arka planda
+            addChild(bubble)
+
+            // Rastgele sayı görselini ekle
+            addUniqueRandomNumber(to: bubble)
+        }
+
+        // Sağ taraf için 2 ön baloncuk
+        for i in 8..<10 {
+            let bubble = SKSpriteNode(imageNamed: "baloncuk \(i)")
+            bubble.name = "bubble-\(i)"
+            bubble.size = bubbleSize
+            bubble.position = rightFrontPositions[i - 8] // Keep the front bubbles aligned below
+            bubble.zPosition = 1 // Ön planda
+            addChild(bubble)
+
+            // Rastgele sayı görselini ekle
             addUniqueRandomNumber(to: bubble)
         }
     }
 
+
+
     func createBottomBubble() {
         // Baloncuk resmi
         let bubbleImage = SKSpriteNode(imageNamed: "baloncuk")
-        bubbleImage.size = CGSize(width: 150, height: 150)
+        bubbleImage.size = CGSize(width: 180, height: 180)
         bubbleImage.position = CGPoint(x: self.size.width / 2, y: bubbleImage.size.height / 2 + 40)
         bubbleImage.zPosition = 1
         bubbleImage.name = "bottomBubble"
@@ -75,9 +129,9 @@ class NumberScene: SKScene {
         
         // Sabun resmi
         let soapImage = SKSpriteNode(imageNamed: "sabun")
-        soapImage.size = CGSize(width: 90, height: 90)
+        soapImage.size = CGSize(width: 100, height: 100)
         soapImage.position = CGPoint(x: 0, y: 0)
-        soapImage.zPosition = 2
+        soapImage.zPosition = 1
         soapImage.name = "soap"
         bubbleImage.addChild(soapImage)
     }
@@ -182,12 +236,20 @@ class NumberScene: SKScene {
 
     // Küçük baloncukların büyüyerek ekranı kaplamasını sağlayan fonksiyon
     func createWaterBubbles() {
+        // Animasyon başlamadan önce müziği çal
+        let celebrationSound = SKAction.playSoundFileNamed("musicGecis.mp3", waitForCompletion: false)
+        self.run(celebrationSound)
+
         let totalBubbleStages = 20 // Baloncukların artış aşamalarının sayısı
         let bubblesPerStage = 120 // Her aşamada eklenen baloncuk sayısı
         
+        if let soapNode = childNode(withName: "soap") as? SKSpriteNode {
+                soapNode.isHidden = true
+            }
+        
         for stage in 0..<totalBubbleStages {
             // Her aşamada baloncukların oluşturulması
-            let delay = Double(stage) * 0.1 // Her aşama arasında 0.5 saniye bekle
+            let delay = Double(stage) * 0.1 // Her aşama arasında 0.1 saniye bekle
             run(SKAction.wait(forDuration: delay)) {
                 for _ in 0..<bubblesPerStage {
                     let smallBubble = SKSpriteNode(imageNamed: "baloncuk")
@@ -215,12 +277,18 @@ class NumberScene: SKScene {
             }
         }
         
-        // Son aşama tamamlandığında kutlama sesi ekleyelim
-        let finalDelay = Double(totalBubbleStages) * 0.5
+        // Son aşama tamamlandığında sahne geçişi ekleyin
+        let finalDelay = Double(totalBubbleStages) * 0.1 // Son aşamadan sonra bekleme süresi
         run(SKAction.wait(forDuration: finalDelay)) {
-            let celebrationSound = SKAction.playSoundFileNamed("musicGecis.mp3", waitForCompletion: false)
-            self.run(celebrationSound)
+            self.transitionToGalaxyScene()
         }
+    }
+
+    func transitionToGalaxyScene() {
+        let galaxyScene = GalaxyScene(size: self.size)
+        galaxyScene.scaleMode = .aspectFill
+        let transition = SKTransition.fade(withDuration: 1.0) // Geçiş animasyonu
+        self.view?.presentScene(galaxyScene, transition: transition)
     }
 
 
