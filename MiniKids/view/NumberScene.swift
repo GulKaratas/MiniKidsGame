@@ -10,7 +10,10 @@ import SpriteKit
 
 class NumberScene: SKScene {
     var backButton: UIButton!
-    var usedNumbers = Set<Int>() // Kullanılan sayıları tutmak için bir küme, sınıfın içinde tanımlanmalı
+    var usedNumbers = Set<Int>() // Kullanılan sayıları tutmak için bir küme
+    var currentNumber = 0 // Kullanıcının doğru sırayla tıklaması gereken sayı
+    var bottomBubble: SKSpriteNode? // Alt baloncuk referansı
+    var isSoundPlaying = false
 
     override func didMove(to view: SKView) {
         // Arka planı ayarla
@@ -25,14 +28,18 @@ class NumberScene: SKScene {
         
         // Baloncukları ekrana yerleştir
         createBubbles()
+        
+        // Alt baloncuk oluştur
+        createBottomBubble()
     }
 
     func createBubbles() {
-        let bubbleSize = CGSize(width: 150, height: 150) // Baloncuk boyutunu daha da büyüttük
+        let bubbleSize = CGSize(width: 150, height: 150)
 
         // Sol tarafa 5 baloncuk
         for i in 0..<5 {
             let bubble = SKSpriteNode(imageNamed: "baloncuk \(i)")
+            bubble.name = "bubble-\(i)" // Baloncukları tanımlamak için isim veriyoruz
             bubble.size = bubbleSize
             bubble.position = CGPoint(x: self.size.width * 0.25, y: self.size.height * (CGFloat(i) + 1) / 6)
             bubble.zPosition = 1
@@ -45,6 +52,7 @@ class NumberScene: SKScene {
         // Sağ tarafa 5 baloncuk
         for i in 5..<10 {
             let bubble = SKSpriteNode(imageNamed: "baloncuk \(i)")
+            bubble.name = "bubble-\(i)" // Baloncukları tanımlamak için isim veriyoruz
             bubble.size = bubbleSize
             bubble.position = CGPoint(x: self.size.width * 0.75, y: self.size.height * (CGFloat(i - 5) + 1) / 6)
             bubble.zPosition = 1
@@ -55,80 +63,230 @@ class NumberScene: SKScene {
         }
     }
 
+    func createBottomBubble() {
+        // Baloncuk resmi
+        let bubbleImage = SKSpriteNode(imageNamed: "baloncuk")
+        bubbleImage.size = CGSize(width: 150, height: 150)
+        bubbleImage.position = CGPoint(x: self.size.width / 2, y: bubbleImage.size.height / 2 + 40)
+        bubbleImage.zPosition = 1
+        bubbleImage.name = "bottomBubble"
+        addChild(bubbleImage)
+        bottomBubble = bubbleImage
+        
+        // Sabun resmi
+        let soapImage = SKSpriteNode(imageNamed: "sabun")
+        soapImage.size = CGSize(width: 90, height: 90)
+        soapImage.position = CGPoint(x: 0, y: 0)
+        soapImage.zPosition = 2
+        soapImage.name = "soap"
+        bubbleImage.addChild(soapImage)
+    }
+
     func addUniqueRandomNumber(to bubble: SKSpriteNode) {
-        // Rastgele ve benzersiz bir sayı seç
         var randomNumber: Int
         repeat {
             randomNumber = Int.random(in: 0...9)
-        } while usedNumbers.contains(randomNumber) // Aynı sayıdan iki tane olmamasını sağlar
+        } while usedNumbers.contains(randomNumber)
         
-        // Seçilen sayıyı kullanılan sayılar dizisine ekle
         usedNumbers.insert(randomNumber)
         
-        // Sayı görselini oluştur
+        // Sayı görseli
         let numberNames = ["sıfır", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz"]
         let numberNode = SKSpriteNode(imageNamed: numberNames[randomNumber])
-        numberNode.size = CGSize(width: 70, height: 70) // Sayı boyutu
+        numberNode.name = "number-\(randomNumber)"
+        numberNode.size = CGSize(width: 70, height: 70)
         numberNode.zPosition = 2
         bubble.addChild(numberNode)
         
         // 3D yer çekimsiz hareket efekti
-        let randomX = CGFloat.random(in: -20...20)
-        let randomY = CGFloat.random(in: -20...20)
-        let randomDuration = Double.random(in: 1.0...2.0)
+               let randomX = CGFloat.random(in: -20...20)
+               let randomY = CGFloat.random(in: -20...20)
+               let randomDuration = Double.random(in: 1.0...2.0)
+               
+               let move1 = SKAction.moveBy(x: randomX, y: randomY, duration: randomDuration)
+               let move2 = SKAction.moveBy(x: -randomX, y: -randomY, duration: randomDuration)
+               let rotate1 = SKAction.rotate(byAngle: .pi / 8, duration: randomDuration)
+               let rotate2 = SKAction.rotate(byAngle: -.pi / 8, duration: randomDuration)
+               
+               let moveSequence = SKAction.sequence([move1, rotate1, move2, rotate2])
+               let repeatAction = SKAction.repeatForever(moveSequence)
+               
+               numberNode.run(repeatAction)
+    }
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        let location = touch.location(in: self)
+        let nodesAtPoint = nodes(at: location)
         
-        let move1 = SKAction.moveBy(x: randomX, y: randomY, duration: randomDuration)
-        let move2 = SKAction.moveBy(x: -randomX, y: -randomY, duration: randomDuration)
-        let rotate1 = SKAction.rotate(byAngle: .pi / 8, duration: randomDuration)
-        let rotate2 = SKAction.rotate(byAngle: -.pi / 8, duration: randomDuration)
+        for node in nodesAtPoint {
+            if node.name == "soap" {
+                // Sabuna tıklandı ve ses daha önce çalmadıysa çal
+                if !isSoundPlaying {
+                    isSoundPlaying = true
+                    // Sabun tıklama sesini çal
+                    let duckSound = SKAction.playSoundFileNamed("duck.mp3", waitForCompletion: true)
+                    
+                    if let soapNode = node as? SKSpriteNode {
+                        // Sabun hareket animasyonu
+                        let moveUp = SKAction.moveBy(x: 0, y: 10, duration: 0.3)
+                        let moveDown = SKAction.moveBy(x: 0, y: -10, duration: 0.3)
+                        let moveSequence = SKAction.sequence([moveUp, moveDown])
+                        let repeatAction = SKAction.repeatForever(moveSequence)
+                        
+                        // Animasyonu başlat
+                        soapNode.run(repeatAction, withKey: "moveSoap")
+                        
+                        // Ses çalma işlemi tamamlandığında animasyonu durdur
+                        run(duckSound) {
+                            soapNode.removeAction(forKey: "moveSoap") // Hareketi durdur
+                            soapNode.position = CGPoint(x: 0, y: 0) // Orijinal konuma getir
+                            self.isSoundPlaying = false // Ses çalma tamamlandığında flag'i sıfırla
+                        }
+                    }
+                }
+                return
+            }
+
+            if let bubble = node.parent as? SKSpriteNode, let numberNode = node as? SKSpriteNode, let numberName = numberNode.name, numberName.contains("number-") {
+                let tappedNumber = Int(numberName.split(separator: "-")[1])!
+                
+                if tappedNumber == currentNumber {
+                    // Doğru sayıya tıklandı
+                    bubble.removeAllChildren()
+                    bubble.run(SKAction.sequence([
+                        SKAction.scale(to: 0, duration: 0.3),
+                        SKAction.removeFromParent()
+                    ]))
+                    createSmallBubbles(at: bubble.position)
+                    currentNumber += 1
+                    moveBottomBubbleUp()
+                    
+                    if currentNumber > 9 {
+                        print("Tüm baloncuklar patlatıldı! Oyun tamamlandı.")
+                        createWaterBubbles()  // Küçük su balonlarını başlat
+                        return
+                    }
+                } else {
+                    // Yanlış sayıya tıklandı
+                    bubble.run(SKAction.sequence([
+                        SKAction.moveBy(x: -10, y: 0, duration: 0.1),
+                        SKAction.moveBy(x: 20, y: 0, duration: 0.1),
+                        SKAction.moveBy(x: -10, y: 0, duration: 0.1)
+                    ]))
+                }
+                return
+            }
+        }
+    }
+
+    // Küçük baloncukların büyüyerek ekranı kaplamasını sağlayan fonksiyon
+    func createWaterBubbles() {
+        let totalBubbleStages = 20 // Baloncukların artış aşamalarının sayısı
+        let bubblesPerStage = 120 // Her aşamada eklenen baloncuk sayısı
         
-        let moveSequence = SKAction.sequence([move1, rotate1, move2, rotate2])
-        let repeatAction = SKAction.repeatForever(moveSequence)
+        for stage in 0..<totalBubbleStages {
+            // Her aşamada baloncukların oluşturulması
+            let delay = Double(stage) * 0.1 // Her aşama arasında 0.5 saniye bekle
+            run(SKAction.wait(forDuration: delay)) {
+                for _ in 0..<bubblesPerStage {
+                    let smallBubble = SKSpriteNode(imageNamed: "baloncuk")
+                    smallBubble.size = CGSize(width: 40, height: 40) // Küçük boyutlu başlar
+                    smallBubble.position = CGPoint(x: CGFloat.random(in: 0...self.size.width),
+                                                   y: CGFloat.random(in: 0...self.size.height))
+                    smallBubble.zPosition = 3
+                    self.addChild(smallBubble)
+                    
+                    // Rastgele yayılma ve büyüme animasyonu
+                    let randomX = CGFloat.random(in: -self.size.width...self.size.width)
+                    let randomY = CGFloat.random(in: -self.size.height...self.size.height)
+                    let randomDuration = Double.random(in: 1.5...2.5)
+                    
+                    let growAction = SKAction.scale(to: 5, duration: randomDuration)
+                    let moveAction = SKAction.moveBy(x: randomX, y: randomY, duration: randomDuration)
+                    let fadeOutAction = SKAction.fadeOut(withDuration: randomDuration)
+                    
+                    // Baloncuk animasyonunu çalıştır
+                    smallBubble.run(SKAction.sequence([
+                        SKAction.group([growAction, moveAction, fadeOutAction]),
+                        SKAction.removeFromParent()
+                    ]))
+                }
+            }
+        }
         
-        numberNode.run(repeatAction)
+        // Son aşama tamamlandığında kutlama sesi ekleyelim
+        let finalDelay = Double(totalBubbleStages) * 0.5
+        run(SKAction.wait(forDuration: finalDelay)) {
+            let celebrationSound = SKAction.playSoundFileNamed("musicGecis.mp3", waitForCompletion: false)
+            self.run(celebrationSound)
+        }
+    }
+
+
+    func createSmallBubbles(at position: CGPoint) {
+        let bubbleCount = 20 // Daha fazla baloncuk eklemek için sayıyı artırdık
+
+        for _ in 0..<bubbleCount {
+            let smallBubble = SKSpriteNode(imageNamed: "baloncuk")
+            smallBubble.size = CGSize(width: 35, height: 35) // Orta boy bir baloncuk
+            smallBubble.position = position
+            smallBubble.zPosition = 3
+            addChild(smallBubble)
+            
+            // Ekran boyutlarına göre rastgele yön ve mesafe hesaplama
+            let randomX = CGFloat.random(in: -self.size.width...self.size.width)
+            let randomY = CGFloat.random(in: -self.size.height...self.size.height)
+            let randomDuration = Double.random(in: 1.0...2.0) // Daha uzun süre
+            
+            // Animasyon: Etrafa sıçrama ve kaybolma
+            smallBubble.run(SKAction.sequence([
+                SKAction.group([
+                    SKAction.moveBy(x: randomX, y: randomY, duration: randomDuration),
+                    SKAction.fadeOut(withDuration: randomDuration) // Kaybolma süresi
+                ]),
+                SKAction.removeFromParent()
+            ]))
+            
+            // Rastgele dönme efekti ekleyerek görselliği artırabiliriz
+            let rotateAction = SKAction.rotate(byAngle: CGFloat.random(in: -4 * .pi...4 * .pi), duration: randomDuration)
+            smallBubble.run(rotateAction)
+        }
+        playRandomSound()
+    }
+    
+    func playRandomSound() {
+        let soundNames = ["sayilar1", "sayilar2", "sayilar3", "sayilar4"]
+        let randomSoundName = soundNames.randomElement()! // Rastgele bir ses seç
+        let playSoundAction = SKAction.playSoundFileNamed(randomSoundName, waitForCompletion: false)
+        run(playSoundAction) // Sesi çal
+    }
+
+
+
+    func moveBottomBubbleUp() {
+        bottomBubble?.run(SKAction.moveBy(x: 0, y: 50, duration: 0.3))
     }
 
     func createBackButton() {
         guard let view = self.view else { return }
-        
-        // Butonu başlat
         backButton = UIButton(type: .custom)
-        
-        // Buton görselini ayarla
         backButton.setImage(UIImage(named: "backButton"), for: .normal)
-        
-        // Buton boyutunu ayarla ve yuvarlak yap
         backButton.frame = CGRect(x: 20, y: 20, width: 50, height: 50)
         backButton.layer.cornerRadius = 25
         backButton.clipsToBounds = true
-        
-        // Butona tıklama işlevi ekle
         backButton.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
-        
-        // Butonu görünüme ekle
         view.addSubview(backButton)
     }
 
     @objc func backButtonTapped() {
-        // NextScene'e geri dön
         let nextScene = NextScene(size: self.size)
         nextScene.scaleMode = .aspectFill
         self.view?.presentScene(nextScene, transition: SKTransition.fade(withDuration: 1.0))
-        
-        // Geçiş yapıldığında butonu görünümden kaldır
         backButton.removeFromSuperview()
     }
 
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first else { return }
-        let location = touch.location(in: self)
-        
-        // Bir parlama efekti oluştur (Opsiyonel)
-        GlowEffectManager.createGlowEffect(at: location, in: self)
-    }
-
     override func willMove(from view: SKView) {
-        // Scene'den çıkarken butonun kaldırıldığından emin olun
         backButton.removeFromSuperview()
     }
 }
