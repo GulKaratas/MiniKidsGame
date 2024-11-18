@@ -18,6 +18,8 @@ class GalaxyScene: SKScene {
     var audioPlayer: AVAudioPlayer?
     var audioPlayerBackground: AVAudioPlayer?
     var currentRocketSoundIndex = 0
+    var totalGalaxies = 10 // Total number of galaxies
+    var galaxiesDestroyed = 0
     
     override func didMove(to view: SKView) {
         // Arka planı ayarla
@@ -122,17 +124,19 @@ class GalaxyScene: SKScene {
             addUniqueRandomNumber(to: galaxy)
         }
     }
+   
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
         let nodesAtLocation = nodes(at: location)
         
         for node in nodesAtLocation {
-                if let spaceship = node as? SKSpriteNode, spaceship.name == "roket" {
-                    playSequentialRocketSound() // Play the next sound
-                    rotateRocket(spaceship)
-                }
+            if let spaceship = node as? SKSpriteNode, spaceship.name == "roket" {
+                playSequentialRocketSound() // Play the next sound
+                rotateRocket(spaceship)
             }
+        }
+        
         for node in nodesAtLocation {
             if let galaxy = node as? SKSpriteNode, let name = galaxy.name, name.starts(with: "galaxy") {
                 // Galaxy'nin doğru sayıya basıldığını kontrol et
@@ -143,8 +147,15 @@ class GalaxyScene: SKScene {
                         // Doğru sayı, galaxy patlat
                         explodeGalaxy(at: galaxy.position)
                         galaxy.removeFromParent()
+                        galaxiesDestroyed += 1 // Increment the destroyed galaxy count
                         currentNumber += 1  // Artık doğru galaxy patlatıldı, bir sonraki sayıya geç
                         moveRocketUp()
+                        
+                        // Check if all galaxies have been destroyed
+                        if galaxiesDestroyed == totalGalaxies {
+                            // Trigger the victory animation (explosion of galaxies)
+                            animateGalaxiesExplosion()  // Start the explosion effect
+                        }
                     } else {
                         // Yanlış sayı, galaxy'yi sallama animasyonu
                         shakeGalaxy(galaxy)
@@ -152,6 +163,60 @@ class GalaxyScene: SKScene {
                 }
             }
         }
+    }
+
+    func animateGalaxiesExplosion() {
+        let galaxyTextures: [SKTexture] = [
+            SKTexture(imageNamed: "galaxy0"),
+            SKTexture(imageNamed: "galaxy1"),
+            SKTexture(imageNamed: "galaxy2"),
+            SKTexture(imageNamed: "galaxy3"),
+            SKTexture(imageNamed: "galaxy4"),
+            SKTexture(imageNamed: "galaxy5"),
+            SKTexture(imageNamed: "galaxy6"),
+            SKTexture(imageNamed: "galaxy7"),
+            SKTexture(imageNamed: "galaxy8"),
+            SKTexture(imageNamed: "galaxy9")
+        ]
+        
+        // Galaxy'leri hızlı bir şekilde oluşturmak için sürekli olarak spawn yapalım
+        let spawnNewGalaxy = SKAction.run {
+            let randomTexture = galaxyTextures.randomElement()!
+            let newGalaxyNode = SKSpriteNode(texture: randomTexture)
+            newGalaxyNode.position = CGPoint(x: CGFloat.random(in: 0..<self.size.width),
+                                             y: CGFloat.random(in: 0..<self.size.height))
+            newGalaxyNode.zPosition = 3
+            
+
+            // Boyutları daha büyük yapalım
+            let randomSize = CGFloat.random(in: 50...300) // Büyük boyut
+            newGalaxyNode.size = CGSize(width: randomSize, height: randomSize)
+            
+            self.addChild(newGalaxyNode)
+        }
+        
+        // Galaxy'leri çok hızlı bir şekilde spawn etmek için aksiyon
+        let spawnInterval = SKAction.repeatForever(SKAction.sequence([spawnNewGalaxy, SKAction.wait(forDuration: 0.01)]))
+        
+        // Galaxy'leri hızlı bir şekilde spawn etmeye başla
+        run(spawnInterval)
+        
+        // Ekranı hızlıca kaplayacak şekilde tüm galaxy'ler çoğalacak
+        let waitAction = SKAction.wait(forDuration: 5.0)  // 5 saniye sonra geçiş yapılacak
+        let transitionAction = SKAction.run {
+            self.transitionToBallonScene()  // Yeni sahneye geçiş
+        }
+        
+        // Galaxiler çoğaldıktan sonra sahneye geçiş yapılacak
+        let fullSequence = SKAction.sequence([waitAction, transitionAction])
+        run(fullSequence)
+    }
+
+
+    func transitionToBallonScene() {
+        let ballonScene = BallonScene(size: self.size)
+        ballonScene.scaleMode = .aspectFill
+        self.view?.presentScene(ballonScene, transition: SKTransition.fade(withDuration: 1.0))
     }
 
      // Tracks the current sound index
@@ -255,20 +320,18 @@ class GalaxyScene: SKScene {
                }
            }
        }
+    
+    func moveRocketUp() {
+        guard let spaceship = bottomGalaxy else { return }
+        let moveUp = SKAction.moveBy(x: 0, y: 50, duration: 0.5)
+        spaceship.run(moveUp) {
+            if spaceship.position.y >= self.size.height {
+                print("Oyun bitti! Roket üst noktaya ulaştı.")
+                
+            }
+        }
+    }
 
-
-
-
-       func moveRocketUp() {
-           guard let spaceship = bottomGalaxy else { return }
-           let moveUp = SKAction.moveBy(x: 0, y: 50, duration: 0.5)
-           spaceship.run(moveUp) {
-               if spaceship.position.y >= self.size.height {
-                   print("Oyun bitti! Roket üst noktaya ulaştı.")
-                   // Oyunun bitiş mantığını buraya ekleyin
-               }
-           }
-       }
 
        func shakeGalaxy(_ galaxy: SKSpriteNode) {
            let shakeLeft = SKAction.moveBy(x: -10, y: 0, duration: 0.1)
@@ -343,4 +406,4 @@ class GalaxyScene: SKScene {
         backButton.removeFromSuperview()
         audioPlayerBackground?.stop()
     }
-} 
+}
