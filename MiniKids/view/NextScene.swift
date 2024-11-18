@@ -123,7 +123,7 @@ class NextScene: SKScene {
         if buttons[0].contains(location) {
             presentScene(ShapesScene(size: self.size))
         } else if buttons[1].contains(location) {
-            presentScene(GalaxyScene(size: self.size))
+            presentScene(BallonScene(size: self.size))
         } else if buttons[2].contains(location) {
             presentScene(AnimalScene(size: self.size))
         } else if buttons[3].contains(location) {
