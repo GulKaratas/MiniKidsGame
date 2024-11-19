@@ -14,7 +14,7 @@ class CardNode: SKSpriteNode {
     let backImageName: String
     var isFlipped = false
     var isMatched = false
-    private var synthesizer = AVSpeechSynthesizer()  // TTS (Text-to-Speech) için synthesizer
+    private var synthesizer = AVSpeechSynthesizer()  // TTS (Text-to-Speech) için synthesizer (Artık kullanılmayacak)
 
     init(frontImageName: String, backImageName: String) {
         self.frontImageName = frontImageName
@@ -42,35 +42,12 @@ class CardNode: SKSpriteNode {
     
     func matchFound() {
         isMatched = true
-        playAnimalSound()
+        playMagicSound()  // Magic sound when a match is found
     }
     
-    // Hayvanın ismine göre adını sesli olarak okuma
-    private func playAnimalSound() {
-        let animalName: String
-        
-        // frontImageName'e göre hayvan ismini seç
-        switch frontImageName {
-        case "at":
-            animalName = "at"
-        case "tavuk":
-            animalName = "tavuk"
-        case "tavşan":
-            animalName = "tavşan"
-        case "inek":
-            animalName = "inek"
-        case "kaplan":
-            animalName = "kaplan"
-        case "kedi":
-            animalName = "kedi"
-        // Diğer hayvanlar için de benzer case ifadeleri ekleyebilirsiniz
-        default:
-            return // Tanımlı bir hayvan adı yoksa geri dön
-        }
-        
-        // AVSpeechUtterance ile sesli olarak hayvan adını okuma
-        let utterance = AVSpeechUtterance(string: animalName)
-        utterance.voice = AVSpeechSynthesisVoice(language: "tr-TR")  // Türkçe seslendirme
-        synthesizer.speak(utterance)
+    // Magic sound (instead of animal name) when a match is found
+    private func playMagicSound() {
+        let magicSound = SKAction.playSoundFileNamed("magic.mp3", waitForCompletion: false)
+        self.run(magicSound)
     }
 }

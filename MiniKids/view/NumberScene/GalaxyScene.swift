@@ -166,6 +166,9 @@ class GalaxyScene: SKScene {
     }
 
     func animateGalaxiesExplosion() {
+        let celebrationSound = SKAction.playSoundFileNamed("musicGecis.mp3", waitForCompletion: false)
+        self.run(celebrationSound)
+        
         let galaxyTextures: [SKTexture] = [
             SKTexture(imageNamed: "galaxy0"),
             SKTexture(imageNamed: "galaxy1"),
@@ -202,7 +205,7 @@ class GalaxyScene: SKScene {
         run(spawnInterval)
         
         // Ekranı hızlıca kaplayacak şekilde tüm galaxy'ler çoğalacak
-        let waitAction = SKAction.wait(forDuration: 5.0)  // 5 saniye sonra geçiş yapılacak
+        let waitAction = SKAction.wait(forDuration: 4.0)  // 5 saniye sonra geçiş yapılacak
         let transitionAction = SKAction.run {
             self.transitionToBallonScene()  // Yeni sahneye geçiş
         }
@@ -219,7 +222,13 @@ class GalaxyScene: SKScene {
         self.view?.presentScene(ballonScene, transition: SKTransition.fade(withDuration: 1.0))
     }
 
-     // Tracks the current sound index
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+            guard let touch = touches.first else { return }
+            let location = touch.location(in: self)
+            
+            // Check if mouse is hovering over any button
+        GlowEffectManager.createGlowEffect(at: location, in: self)
+        }
 
     func playSequentialRocketSound() {
         let rocketSounds = ["roket1", "roket2", "roket"]

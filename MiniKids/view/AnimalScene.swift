@@ -60,23 +60,27 @@ class AnimalScene: SKScene {
             for col in 0..<columns {
                 let xPosition = startX + CGFloat(col) * (cardWidth + padding)
                 let yPosition = startY - CGFloat(row) * (cardHeight + padding)
+                
+                // Check if there are elements to remove
+                if !shuffledImages.isEmpty, !backImages.isEmpty {
+                    let frontImageName = shuffledImages.removeLast()
+                    let backImageName = backImages.removeLast()
 
-                let frontImageName = shuffledImages.removeLast()
-                let backImageName = backImages.removeLast()
+                    let card = CardNode(frontImageName: frontImageName, backImageName: backImageName)
+                    card.position = CGPoint(x: xPosition, y: yPosition)
+                    card.size = CGSize(width: cardWidth, height: cardHeight)
+                    card.alpha = 0
+                    card.zPosition = 1
+                    addChild(card)
+                    cardNodes.append(card)
 
-                let card = CardNode(frontImageName: frontImageName, backImageName: backImageName)
-                card.position = CGPoint(x: xPosition, y: yPosition)
-                card.size = CGSize(width: cardWidth, height: cardHeight)
-                card.alpha = 0
-                card.zPosition = 1
-                addChild(card)
-                cardNodes.append(card)
-
-                let fadeInAction = SKAction.fadeIn(withDuration: 0.5)
-                let waitAction = SKAction.wait(forDuration: 0.1 * Double(row * columns + col))
-                card.run(SKAction.sequence([waitAction, fadeInAction]))
+                    let fadeInAction = SKAction.fadeIn(withDuration: 0.5)
+                    let waitAction = SKAction.wait(forDuration: 0.1 * Double(row * columns + col))
+                    card.run(SKAction.sequence([waitAction, fadeInAction]))
+                }
             }
         }
+    
     }
 
     func addBounceEffect(to card: CardNode) {
@@ -194,6 +198,39 @@ class AnimalScene: SKScene {
             flipCard(card)
         }
     }
+    private func triggerGameOverAnimation() {
+        let celebrationSound = SKAction.playSoundFileNamed("musicGecis.mp3", waitForCompletion: false)
+        self.run(celebrationSound)
+
+        let bubbleAction = SKAction.run { [weak self] in
+            guard let self = self else { return }
+            for _ in 0..<15 {
+                let randomBalloon = SKSpriteNode(imageNamed: "balloon\(Int.random(in: 0...9))")
+                randomBalloon.position = CGPoint(
+                    x: CGFloat.random(in: 0...self.size.width),
+                    y: CGFloat.random(in: 0...self.size.height)
+                )
+                randomBalloon.zPosition = 3
+                self.addChild(randomBalloon)
+
+                let growAction = SKAction.scale(to: 3.0, duration: 2.0)
+                let fadeOut = SKAction.fadeOut(withDuration: 2.0)
+                randomBalloon.run(SKAction.sequence([SKAction.group([growAction, fadeOut]), SKAction.removeFromParent()]))
+            }
+        }
+
+        self.run(SKAction.sequence([
+            SKAction.repeat(bubbleAction, count: 20),
+            SKAction.run { self.transitionToFruitScene() }
+        ]))
+    }
+
+    private func transitionToFruitScene() {
+        let fruitScene = FruitScene(size: self.size) // Make sure you have the FruitScene class set up
+        fruitScene.scaleMode = .aspectFill
+        self.view?.presentScene(fruitScene, transition: SKTransition.fade(withDuration: 1.5))
+    }
+
 
     func createBackButton() {
         guard let view = self.view else { return }

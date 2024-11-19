@@ -89,8 +89,81 @@ class BallonScene: SKScene {
             self.view?.addGestureRecognizer(tapGesture)
         }
     }
+    private func showGameOverAnimation() {
+        let celebrationSound = SKAction.playSoundFileNamed("musicGecis.mp3", waitForCompletion: false)
+        self.run(celebrationSound)
+        // Adım 1: "Tebrikler" yazısını ekle
+        let congratulationsLabel = SKLabelNode(text: "Tebrikler!")
+        congratulationsLabel.fontName = "AvenirNext-Bold"
+        congratulationsLabel.fontSize = 50
+        congratulationsLabel.fontColor = .red
+        congratulationsLabel.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        congratulationsLabel.zPosition = 10
+        congratulationsLabel.setScale(0) // Başlangıç boyutu 0 (görünmez)
+        addChild(congratulationsLabel)
+        
+        // Büyüme animasyonu
+        let scaleUp = SKAction.scale(to: 1.5, duration: 0.5)
+        let scaleDown = SKAction.scale(to: 1.0, duration: 0.3)
+        let scaleSequence = SKAction.sequence([scaleUp, scaleDown])
+        congratulationsLabel.run(scaleSequence)
 
-    // Modify the popBalloon method to move the sun/rain button up after each pop
+        // Adım 2: Konfeti efektini başlat
+        startConfettiEffect()
+
+        // Adım 3: 3 saniye sonra sahneyi temizleyip ana menüye dön
+        run(SKAction.wait(forDuration: 3.0)) {
+            self.clearGameOverScene()
+        }
+    }
+
+    private func startConfettiEffect() {
+        let confettiColors: [UIColor] = [.red, .green, .blue, .yellow, .purple, .orange]
+        let numberOfConfetti = 50
+        
+        for _ in 0..<numberOfConfetti {
+            let confetti = SKShapeNode(circleOfRadius: 5)
+            confetti.fillColor = confettiColors.randomElement() ?? .white
+            confetti.position = CGPoint(
+                x: CGFloat.random(in: 0...size.width),
+                y: size.height
+            )
+            confetti.zPosition = 5
+            addChild(confetti)
+
+            // Düşme animasyonu
+            let moveDown = SKAction.moveBy(x: CGFloat.random(in: -50...50), y: -size.height, duration: 3.0)
+            let fadeOut = SKAction.fadeOut(withDuration: 0.5)
+            let remove = SKAction.removeFromParent()
+            let sequence = SKAction.sequence([moveDown, fadeOut, remove])
+            confetti.run(sequence)
+        }
+    }
+
+    private func clearGameOverScene() {
+        // Sahneyi temizle
+        removeAllActions()
+        removeAllChildren()
+
+        // Ana menüye veya başka bir sahneye geçiş
+        let ballonScene = AnimalScene(size: self.size)
+        ballonScene.scaleMode = .aspectFill
+        let transition = SKTransition.crossFade(withDuration: 1.0)
+        self.view?.presentScene(ballonScene, transition: transition)
+    }
+    override func update(_ currentTime: TimeInterval) {
+        if currentBalloonIndex == 10 { // Tüm balonlar patlatıldıysa
+            showGameOverAnimation()
+        }
+    }
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+            guard let touch = touches.first else { return }
+            let location = touch.location(in: self)
+            
+            // Check if mouse is hovering over any button
+        GlowEffectManager.createGlowEffect(at: location, in: self)
+        }
    
 
     private func moveSunOffScreen() {
@@ -219,7 +292,7 @@ class BallonScene: SKScene {
     private func addGentleMovementAnimation(to balloon: SKSpriteNode) {
         let moveX = CGFloat.random(in: -50...50)
         let moveY = CGFloat.random(in: -30...30)
-        let moveDuration = 4.0
+        let moveDuration = 6.0
 
         let moveActionX = SKAction.sequence([
             SKAction.moveBy(x: moveX, y: 0, duration: moveDuration),
@@ -276,6 +349,8 @@ class BallonScene: SKScene {
                 sunButton.frame.origin.y = -sunButton.frame.height // Move it off the screen completely
             }
         }
+        balloon.removeAllActions()
+        balloon.removeFromParent()
 
         // Check if all balloons have been popped and move the sun/rain button off-screen
         if currentBalloonIndex == 10 { // If the last balloon is popped (assuming 10 balloons)
@@ -366,17 +441,20 @@ class BallonScene: SKScene {
 
 
     override func willMove(from view: SKView) {
-        // Remove sun button, animation view, and back button before leaving the scene
-        sunButton.removeFromSuperview()
-        animationView?.stop() // Stop the animation if it's playing
-        animationView?.removeFromSuperview()
-
-        // Reset the sun/rain button state to the initial sun image
-        sunButton.setImage(UIImage(named: "gunes"), for: .normal)
-        isShowingSun = true // Ensure the state reflects the sun showing
-        isAnimationPlaying = false // Ensure the animation is reset
-
-        backButton.removeFromSuperview()
+        super.willMove(from: view)
+        
+        if let gestures = view.gestureRecognizers {
+            for gesture in gestures {
+                view.removeGestureRecognizer(gesture)
+            }
+        }
+        
+        // Diğer temizlik işlemleri
+        sunButton?.removeFromSuperview()
+        backButton?.removeFromSuperview()
+        removeAllActions()
+        removeAllChildren()
+           physicsWorld.speed = 0
     }
 
 }

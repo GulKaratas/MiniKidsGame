@@ -283,7 +283,13 @@ class NumberScene: SKScene {
             self.transitionToGalaxyScene()
         }
     }
-
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+            guard let touch = touches.first else { return }
+            let location = touch.location(in: self)
+            
+            // Check if mouse is hovering over any button
+        GlowEffectManager.createGlowEffect(at: location, in: self)
+        }
     func transitionToGalaxyScene() {
         let galaxyScene = GalaxyScene(size: self.size)
         galaxyScene.scaleMode = .aspectFill
