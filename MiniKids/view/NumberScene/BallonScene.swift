@@ -20,13 +20,14 @@ class BallonScene: SKScene {
     var isShowingSun = true
     var isAnimationPlaying = false
     var sunInitialYPosition: CGFloat = 0
-
+    var audioPlayer: AVAudioPlayer?
     
     override func didMove(to view: SKView) {
         setupBackground()
         setupBalloons()
         createBackButton()
         createSunButton()
+        startBackgroundMusic()
     }
 
     private func setupBackground() {
@@ -89,33 +90,34 @@ class BallonScene: SKScene {
             self.view?.addGestureRecognizer(tapGesture)
         }
     }
-    private func showGameOverAnimation() {
-        let celebrationSound = SKAction.playSoundFileNamed("musicGecis.mp3", waitForCompletion: false)
-        self.run(celebrationSound)
-        // Adım 1: "Tebrikler" yazısını ekle
-        let congratulationsLabel = SKLabelNode(text: "Tebrikler!")
-        congratulationsLabel.fontName = "AvenirNext-Bold"
-        congratulationsLabel.fontSize = 50
-        congratulationsLabel.fontColor = .red
-        congratulationsLabel.position = CGPoint(x: size.width / 2, y: size.height / 2)
-        congratulationsLabel.zPosition = 10
-        congratulationsLabel.setScale(0) // Başlangıç boyutu 0 (görünmez)
-        addChild(congratulationsLabel)
-        
-        // Büyüme animasyonu
-        let scaleUp = SKAction.scale(to: 1.5, duration: 0.5)
-        let scaleDown = SKAction.scale(to: 1.0, duration: 0.3)
-        let scaleSequence = SKAction.sequence([scaleUp, scaleDown])
-        congratulationsLabel.run(scaleSequence)
+    private func startBackgroundMusic() {
+        guard let url = Bundle.main.url(forResource: "minikids", withExtension: "wav") else {
+            print("Music file not found")
+            return
+        }
 
-        // Adım 2: Konfeti efektini başlat
-        startConfettiEffect()
-
-        // Adım 3: 3 saniye sonra sahneyi temizleyip ana menüye dön
-        run(SKAction.wait(forDuration: 3.0)) {
-            self.clearGameOverScene()
+        do {
+            // Initialize the audio player with the music file
+            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            audioPlayer?.numberOfLoops = -1 // Loop the music indefinitely
+            audioPlayer?.play() // Start playing the music
+        } catch {
+            print("Error playing music: \(error.localizedDescription)")
         }
     }
+
+    private func showGameOverAnimation() {
+          // Konfeti efekti başlat (isteğe bağlı)
+           startConfettiEffect()
+            
+
+           // 3 saniye sonra ana menüye dön
+           run(SKAction.wait(forDuration: 3.0)) {
+               self.clearGameOverScene()
+           }
+       }
+   
+
 
     private func startConfettiEffect() {
         let confettiColors: [UIColor] = [.red, .green, .blue, .yellow, .purple, .orange]
@@ -332,6 +334,7 @@ class BallonScene: SKScene {
     }
     
     private func popBalloon(_ balloon: SKSpriteNode) {
+        
         // Spawn the Lottie animation at the balloon's position
         spawnBalls(at: balloon.position)
         
@@ -357,9 +360,9 @@ class BallonScene: SKScene {
             moveSunOffScreen()
         }
     }
-
-    
+   
     private func spawnBalls(at position: CGPoint) {
+        
         guard let skView = self.view as? SKView else { return }
 
         // SKScene pozisyonunu UIView pozisyonuna dönüştür
@@ -441,6 +444,7 @@ class BallonScene: SKScene {
 
 
     override func willMove(from view: SKView) {
+        
         super.willMove(from: view)
         
         if let gestures = view.gestureRecognizers {
@@ -448,7 +452,8 @@ class BallonScene: SKScene {
                 view.removeGestureRecognizer(gesture)
             }
         }
-        
+        audioPlayer?.stop()
+
         // Diğer temizlik işlemleri
         sunButton?.removeFromSuperview()
         backButton?.removeFromSuperview()
