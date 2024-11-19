@@ -145,17 +145,19 @@ class AnimalScene: SKScene {
     }
 
     func resetCardsForNewRound() {
-        stopTransitionMusic()  // Stop the music when moving to the next round
-        
-        // Clear remaining cards and images from the previous round
+        stopTransitionMusic()  // Müziği durdur
+        // Geçişten önce arka planda gereksiz öğeleri temizle
         self.children.filter { $0 is SKSpriteNode && ($0 as! SKSpriteNode).texture != nil && $0 != backgroundNode }.forEach { $0.removeFromParent() }
         
+        // Kartlar ve flip işlemlerini sıfırlayın
         cardNodes.removeAll()
         flippedCards.removeAll()
         
+        // Yeni tura başla
         currentRound += 1
         setupCards(forRound: currentRound)
     }
+
 
     
     func fillScreenWithAnimalFaces() {
@@ -205,11 +207,17 @@ class AnimalScene: SKScene {
     }
 
     @objc func backButtonTapped() {
+        stopTransitionMusic() // Müziği durdur
+        
+        // Eski öğeleri temizle
+        self.children.filter { $0 is SKSpriteNode && ($0 as! SKSpriteNode).texture != nil && $0 != backgroundNode }.forEach { $0.removeFromParent() }
+        
         let nextScene = NextScene(size: self.size)
         nextScene.scaleMode = .aspectFill
         self.view?.presentScene(nextScene, transition: SKTransition.fade(withDuration: 1.0))
-        backButton.removeFromSuperview()
     }
+
+
 
     override func willMove(from view: SKView) {
         backButton.removeFromSuperview()

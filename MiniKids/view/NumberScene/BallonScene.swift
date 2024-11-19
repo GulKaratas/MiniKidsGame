@@ -16,11 +16,17 @@ class BallonScene: SKScene {
     var currentBalloonIndex = 0  // Tracks the current balloon to pop
     var poppedBalloons = Set<Int>()  // Set to keep track of popped balloons
     var animationView: LottieAnimationView!
+    var sunButton: UIButton!
+    var isShowingSun = true
+    var isAnimationPlaying = false
+    var sunInitialYPosition: CGFloat = 0
+
     
     override func didMove(to view: SKView) {
         setupBackground()
         setupBalloons()
         createBackButton()
+        createSunButton()
     }
 
     private func setupBackground() {
@@ -84,6 +90,132 @@ class BallonScene: SKScene {
         }
     }
 
+    // Modify the popBalloon method to move the sun/rain button up after each pop
+   
+
+    private func moveSunOffScreen() {
+        guard let sunButton = sunButton else { return }
+        
+        // Animate the sun/rain button to move off the screen after the last balloon is popped
+        UIView.animate(withDuration: 1.0, animations: {
+            sunButton.frame.origin.y = -sunButton.frame.height
+        }) { _ in
+            // Optionally, reset the sun/rain button to the initial position for the next round
+            sunButton.frame.origin.y = self.sunInitialYPosition
+        }
+    }
+
+    private func createSunButton() {
+        guard let view = self.view else { return }
+        
+        sunButton = UIButton(type: .custom)
+        sunButton.setImage(UIImage(named: "gunes"), for: .normal) // Başlangıç olarak güneş resmi
+        
+        // Düğmenin ekranın alt ortasında konumlanmasını sağla
+        sunButton.frame = CGRect(
+            x: (view.frame.width - 100) / 2, // X ekseninde ortala
+            y: view.frame.height - 90,     // Y ekseninde alt ortada (120 kadar yukarıda)
+            width: 100,
+            height: 100
+        )
+        
+        sunButton.addTarget(self, action: #selector(sunButtonTapped), for: .touchUpInside)
+        view.addSubview(sunButton)
+        view.bringSubviewToFront(sunButton) // Görünürlüğü garanti altına al
+    }
+
+
+    @objc private func sunButtonTapped() {
+        if isAnimationPlaying {
+            return // Don't trigger the animation if it's already playing
+        }
+        
+        isAnimationPlaying = true // Set the flag to true when starting the animation
+        
+        if isShowingSun {
+            triggerSunAnimation()
+        } else {
+            triggerRainAnimation()
+        }
+    }
+
+
+    private func triggerSunAnimation() {
+          guard let skView = self.view else { return }
+          
+          let sunAnimation = LottieAnimationView(name: "gunesAnimation")
+          sunAnimation.frame = CGRect(
+              x: skView.frame.width / 2 - 100, // Ortada
+              y: skView.frame.height * 0.1,   // Yukarıda bir miktar yerleştirilmiş
+              width: 200,
+              height: 200
+          )
+          sunAnimation.contentMode = .scaleAspectFit
+          sunAnimation.loopMode = .playOnce
+          skView.addSubview(sunAnimation)
+
+          // Animasyonu oynat
+          sunAnimation.play()
+
+          // 5 saniye bekledikten sonra animasyonu kaydır ve kaldır
+          UIView.animate(withDuration: 3.0, delay: 5.0, options: .curveEaseInOut, animations: {
+              sunAnimation.center = CGPoint(x: -100, y: skView.frame.height * 0.1)
+          }, completion: { _ in
+              sunAnimation.removeFromSuperview()
+              self.sunButton.setImage(UIImage(named: "yagmur"), for: .normal)
+              self.isShowingSun = false
+              self.isAnimationPlaying = false // Reset the flag after the animation is complete
+          })
+      }
+
+
+
+    private func triggerRainAnimation() {
+        guard let skView = self.view else { return }
+        
+        let leftRainAnimation = LottieAnimationView(name: "yagmurAnimation")
+        let rightRainAnimation = LottieAnimationView(name: "yagmurAnimation")
+
+        let animationSize: CGFloat = 150
+        leftRainAnimation.frame = CGRect(
+            x: skView.frame.width * 0.3 - animationSize / 2, // Sol pozisyon
+            y: skView.frame.height * 0.1,
+            width: animationSize,
+            height: animationSize
+        )
+        rightRainAnimation.frame = CGRect(
+            x: skView.frame.width * 0.7 - animationSize / 2, // Sağ pozisyon
+            y: skView.frame.height * 0.1,
+            width: animationSize,
+            height: animationSize
+        )
+        
+        leftRainAnimation.contentMode = .scaleAspectFit
+        rightRainAnimation.contentMode = .scaleAspectFit
+        leftRainAnimation.loopMode = .playOnce
+        rightRainAnimation.loopMode = .playOnce
+        
+        skView.addSubview(leftRainAnimation)
+        skView.addSubview(rightRainAnimation)
+
+        // Animasyonları oynat
+        leftRainAnimation.play()
+        rightRainAnimation.play()
+        
+        // 5 saniye bekledikten sonra animasyonları kaydır ve kaldır
+        UIView.animate(withDuration: 3.0, delay: 5.0, options: .curveEaseInOut, animations: {
+            leftRainAnimation.center = CGPoint(x: skView.frame.width * 0.3, y: -animationSize)
+            rightRainAnimation.center = CGPoint(x: skView.frame.width * 0.7, y: -animationSize)
+        }, completion: { _ in
+            leftRainAnimation.removeFromSuperview()
+            rightRainAnimation.removeFromSuperview()
+            self.sunButton.setImage(UIImage(named: "gunes"), for: .normal)
+            self.isShowingSun = true
+            self.isAnimationPlaying = false // Reset the flag after the animation is complete
+        })
+    }
+
+
     private func addGentleMovementAnimation(to balloon: SKSpriteNode) {
         let moveX = CGFloat.random(in: -50...50)
         let moveY = CGFloat.random(in: -30...30)
@@ -134,8 +266,22 @@ class BallonScene: SKScene {
         balloon.run(SKAction.scale(to: 0, duration: 0.5)) {
             balloon.removeFromParent() // Remove the balloon after it disappears
         }
-    }
 
+        // Move the sun/rain button upwards after each balloon pop
+        if let sunButton = sunButton {
+            // Move the sun/rain button by a certain distance after each pop
+            let moveUpAction = SKAction.moveBy(x: 0, y: 30, duration: 0.3) // Move up by 30 points
+            sunButton.frame.origin.y -= 30 // Move it manually in the frame
+            if sunButton.frame.origin.y <= 0 { // If it's moved out of the screen
+                sunButton.frame.origin.y = -sunButton.frame.height // Move it off the screen completely
+            }
+        }
+
+        // Check if all balloons have been popped and move the sun/rain button off-screen
+        if currentBalloonIndex == 10 { // If the last balloon is popped (assuming 10 balloons)
+            moveSunOffScreen()
+        }
+    }
 
     
     private func spawnBalls(at position: CGPoint) {
@@ -169,10 +315,6 @@ class BallonScene: SKScene {
     }
 
 
-
-
-
-
     // Helper function to get a random color
     private func getRandomColor() -> UIColor {
         let colors: [UIColor] = [
@@ -203,13 +345,38 @@ class BallonScene: SKScene {
     }
 
     @objc func backButtonTapped() {
+        // Don't allow the back button action if an animation is still playing
+        if isAnimationPlaying {
+            return // Exit the method and do nothing
+        }
+        
+        // First, remove the sun button and animations before transitioning
+        sunButton.removeFromSuperview()
+        animationView?.stop() // Stop any active animation
+        animationView?.removeFromSuperview()
+        backButton.removeFromSuperview()
+
+        // Now perform the scene transition after UI cleanup
         let nextScene = NextScene(size: self.size)
         nextScene.scaleMode = .aspectFill
+
+        // Transition with a fade effect after the cleanup is done
         self.view?.presentScene(nextScene, transition: SKTransition.fade(withDuration: 1.0))
+    }
+
+
+    override func willMove(from view: SKView) {
+        // Remove sun button, animation view, and back button before leaving the scene
+        sunButton.removeFromSuperview()
+        animationView?.stop() // Stop the animation if it's playing
+        animationView?.removeFromSuperview()
+
+        // Reset the sun/rain button state to the initial sun image
+        sunButton.setImage(UIImage(named: "gunes"), for: .normal)
+        isShowingSun = true // Ensure the state reflects the sun showing
+        isAnimationPlaying = false // Ensure the animation is reset
+
         backButton.removeFromSuperview()
     }
 
-    override func willMove(from view: SKView) {
-        backButton.removeFromSuperview()
-    }
 }
