@@ -4,6 +4,12 @@
 //
 //  Created by Gül Karataş on 20.11.2024.
 //
+//
+//  IllustrationScene.swift
+//  MiniKids
+//
+//  Created by Gül Karataş on 20.11.2024.
+//
 
 import UIKit
 import SpriteKit
@@ -45,6 +51,7 @@ class IllustrationScene: SKScene {
         
         background.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         background.zPosition = -1
+        background.name = "background" // Dokunma kontrolü için isim ekle
         addChild(background)
     }
 
@@ -95,46 +102,28 @@ class IllustrationScene: SKScene {
         let location = touch.location(in: self)
         let touchedNode = atPoint(location)
 
-        // Çizilen çizgilerin üzerine tıklamayı engelle
-        if touchedNode is SKShapeNode && touchedNode.name == "drawing" {
-            return
-        }
-
+        // Eğer süngere dokunulmuşsa
         if touchedNode.name == "sunger" {
             isUsingSunger = true
-        } else if let colorName = touchedNode.name {
-            // Yeni renk seçildiğinde eski çizim yolunu sıfırla
+        } else if let colorName = touchedNode.name, colorName != "drawing" && colorName != "background" {
+            // Yeni renk seçildiğinde
             selectedColor = color(from: colorName)
-            updateTebesirYeri(with: colorName)  // Yeni tebeşir rengini güncelle
-
-            // Eski çizim yolunu sıfırlama
-            drawingPath = nil
-            currentDrawingNode?.removeFromParent() // Eski çizim node'unu kaldır
-            currentDrawingNode = nil
-
-            // Yeni çizim node'u başlat
-            drawingPath = CGMutablePath()
-            let newDrawingNode = SKShapeNode()
-            newDrawingNode.path = drawingPath
-            newDrawingNode.strokeColor = selectedColor // Yeni seçilen rengi ata
-            newDrawingNode.lineWidth = 5.0
-            newDrawingNode.zPosition = 0
-            newDrawingNode.name = "drawing" // Çizim düğümüne isim veriyoruz
-            addChild(newDrawingNode)
-            currentDrawingNode = newDrawingNode
+            updateTebesirYeri(with: colorName)
         } else {
             // Yeni bir çizim yolu başlat
-            drawingPath = CGMutablePath()
-            drawingPath?.move(to: location)
+            if drawingPath == nil {
+                drawingPath = CGMutablePath()
+                drawingPath?.move(to: location)
 
-            let newDrawingNode = SKShapeNode()
-            newDrawingNode.path = drawingPath
-            newDrawingNode.strokeColor = selectedColor // Çizim rengi doğru şekilde atanacak
-            newDrawingNode.lineWidth = 5.0
-            newDrawingNode.zPosition = 0
-            newDrawingNode.name = "drawing" // Çizim düğümüne isim veriyoruz
-            addChild(newDrawingNode)
-            currentDrawingNode = newDrawingNode
+                let newDrawingNode = SKShapeNode()
+                newDrawingNode.path = drawingPath
+                newDrawingNode.strokeColor = selectedColor
+                newDrawingNode.lineWidth = 5.0
+                newDrawingNode.zPosition = 0
+                newDrawingNode.name = "drawing"
+                addChild(newDrawingNode)
+                currentDrawingNode = newDrawingNode
+            }
         }
     }
 
@@ -151,14 +140,14 @@ class IllustrationScene: SKScene {
                     if let shapeNode = node as? SKShapeNode,
                        shapeNode.name == "drawing",
                        shapeNode.contains(location) {
-                        shapeNode.removeFromParent() // Çizimi sil
+                        shapeNode.removeFromParent()
                     }
                 }
             }
-        } else if let path = drawingPath {
+        } else {
+            guard let path = drawingPath else { return }
             path.addLine(to: location)
             currentDrawingNode?.path = path
-            currentDrawingNode?.strokeColor = selectedColor // Çizim rengi her hareketle güncellenir
         }
     }
 
@@ -170,32 +159,14 @@ class IllustrationScene: SKScene {
             if let sungerNode = childNode(withName: "sunger"),
                let initialPosition = initialSungerPosition {
                 let moveAction = SKAction.move(to: initialPosition, duration: 0.3)
-                sungerNode.run(moveAction) { [weak self] in
-                    // Sünger yerine döndükten sonra hızlıca eski renkle devam
-                    self?.prepareForNewDrawing()
-                }
+                sungerNode.run(moveAction)
             }
         } else {
-            // Çizim yolunu bitir
             drawingPath = nil
             currentDrawingNode = nil
         }
     }
 
-    // Yeni çizim hazırlığı
-    private func prepareForNewDrawing() {
-        drawingPath = CGMutablePath()
-        let newDrawingNode = SKShapeNode()
-        newDrawingNode.path = drawingPath
-        newDrawingNode.strokeColor = selectedColor // Son kullanılan renk
-        newDrawingNode.lineWidth = 5.0
-        newDrawingNode.zPosition = 0
-        newDrawingNode.name = "drawing"
-        addChild(newDrawingNode)
-        currentDrawingNode = newDrawingNode
-    }
-
-    
     private func color(from name: String) -> UIColor {
         switch name {
         case "turuncu": return .orange
