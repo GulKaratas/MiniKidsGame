@@ -123,11 +123,13 @@ class NextScene: SKScene {
         if buttons[0].contains(location) {
             presentScene(ShapesScene(size: self.size))
         } else if buttons[1].contains(location) {
-            presentScene(BallonScene(size: self.size))
+            presentScene(NumberScene(size: self.size))
         } else if buttons[2].contains(location) {
             presentScene(AnimalScene(size: self.size))
         } else if buttons[3].contains(location) {
             presentScene(FruitScene(size: self.size))
+        } else if buttons[5].contains(location) {
+            presentScene(IllustrationScene(size: self.size))
         }
     }
     

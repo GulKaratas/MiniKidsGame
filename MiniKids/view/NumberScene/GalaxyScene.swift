@@ -205,7 +205,7 @@ class GalaxyScene: SKScene {
         run(spawnInterval)
         
         // Ekranı hızlıca kaplayacak şekilde tüm galaxy'ler çoğalacak
-        let waitAction = SKAction.wait(forDuration: 4.0)  // 5 saniye sonra geçiş yapılacak
+        let waitAction = SKAction.wait(forDuration: 3.0)  // 5 saniye sonra geçiş yapılacak
         let transitionAction = SKAction.run {
             self.transitionToBallonScene()  // Yeni sahneye geçiş
         }
