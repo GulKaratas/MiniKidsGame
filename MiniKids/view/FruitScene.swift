@@ -6,9 +6,17 @@
 
 import UIKit
 import SpriteKit
+import AVFoundation
 
 class FruitScene: SKScene {
     var backButton: UIButton!
+       var currentFruitName: String?
+       var correctSound: AVAudioPlayer?
+       var wrongSound: AVAudioPlayer?
+       var thoughtCloudImage: SKSpriteNode!
+       var remainingFruits: [String] = [] // Kalan meyveler
+       let allFruits = ["domates", "havuç", "kiraz", "mantar", "soğan", "kabak","steak","çilek","armut","avakado","biber","brokoli","but","ekmek","elma","ekmek","karpuz","kivi","üzüm","yumurta","portakal","muz","peynir","morSoğan","marul","kabak1","lahana","kereviz","pırasa","yabanMersini","ejderMeyvesi","ananas","nar","kahvaltı","makarna","balık","köfte"]
+
 
     override func didMove(to view: SKView) {
         // Arka planı ayarla
@@ -23,8 +31,12 @@ class FruitScene: SKScene {
         // Masa ve yemek resmini ekle
         addTableWithFood()
 
+        
+        remainingFruits = allFruits.shuffled() // Meyveleri karıştır ve başlat
+                showRandomFruitInThoughtCloud()
         // Geri butonunu oluştur
         createBackButton()
+        loadSounds()
     }
     
     func addTableWithFood() {
@@ -69,11 +81,14 @@ class FruitScene: SKScene {
         addMovingFruits(on: counterImage)
         
         // Düşünce bulutu ekle
-        let thoughtCloudImage = SKSpriteNode(imageNamed: "düsünceBulutu")  // Düşünce bulutu görseli
-        thoughtCloudImage.size = CGSize(width: self.size.width * 0.4, height: self.size.height * 0.6) // Boyut ayarı
-        thoughtCloudImage.position = CGPoint(x: rabbitImage.position.x, y: rabbitImage.position.y + rabbitImage.size.height / 2 + thoughtCloudImage.size.height / 5)
-        thoughtCloudImage.zPosition = 2  // Tavşanın üzerinde olmalı
-        addChild(thoughtCloudImage)
+        thoughtCloudImage = SKSpriteNode(imageNamed: "düsünceBulutu")  // Düşünce bulutu görseli
+                thoughtCloudImage.size = CGSize(width: self.size.width * 0.4, height: self.size.height * 0.6) // Boyut ayarı
+                thoughtCloudImage.position = CGPoint(x: rabbitImage.position.x, y: rabbitImage.position.y + rabbitImage.size.height / 2 + thoughtCloudImage.size.height / 10)
+                thoughtCloudImage.zPosition = 2  // Tavşanın üzerinde olmalı
+                addChild(thoughtCloudImage)
+
+                // İlk rastgele meyveyi göster
+                showRandomFruitInThoughtCloud()
     }
     
     func addShelves(to counter: SKSpriteNode) {
@@ -98,33 +113,26 @@ class FruitScene: SKScene {
         }
     }
     func addMovingFruits(on counter: SKSpriteNode) {
-        let fruitNames = ["domates", "havuç", "kiraz", "mantar", "soğan", "kabak","bezelye","steak","çilek","armut","avakado","biber","brokoli","but","ekmek","elma","ekmek","karpuz","kivi","üzüm","yumurta","salatalık","portakal","muz","peynir","morSoğan","marul"] // Meyve isimleri
+        let numberOfShelves = 3
+        let shelfHeightSpacing: CGFloat = counter.size.height / CGFloat(numberOfShelves)
+        let shelfStartY = counter.position.y + counter.size.height / 2 - shelfHeightSpacing / 2
 
-        // Raf konumlarını ayarla
-        let numberOfShelves = 3 // Toplam raf sayısı
-        let shelfHeightSpacing: CGFloat = counter.size.height / CGFloat(numberOfShelves) // Raflar arasındaki mesafe
-        let shelfStartY = counter.position.y + counter.size.height / 2 - shelfHeightSpacing / 2 // Üst rafın başlangıç y pozisyonu
-
-        // Raflar için ayarlanmış Y ofsetleri
         let shelfOffsets: [CGFloat] = [
-            shelfStartY - 90,               // Üst raf (biraz aşağıya indirildi)
-            shelfStartY - shelfHeightSpacing * 1.0 - 10, // Orta raf (çok az aşağıya indirildi)
-            shelfStartY - shelfHeightSpacing * 2.0 + 60  // Alt raf (biraz yukarıya çıkarıldı)
+            shelfStartY - 85,
+            shelfStartY - shelfHeightSpacing * 1.0 - 5,
+            shelfStartY - shelfHeightSpacing * 2.0 + 60
         ]
 
-        // Rafların zPosition değerlerini belirle
-        let shelfZPosition: CGFloat = 0
-        let fruitZPosition: CGFloat = 1 // Meyveler rafların üstünde olacak
+        let fruitZPosition: CGFloat = 1
 
-        // Her rafta sürekli meyve çıkışı sağlayan bir döngü
         for (index, shelfY) in shelfOffsets.enumerated() {
-            let waitDuration = Double(index) * 0.5 // Her raf için zamanlama farkı (ekran doluluk için)
+            let waitDuration = Double(index) * 0.1
             let actionSequence = SKAction.sequence([
-                SKAction.wait(forDuration: waitDuration), // Zamanlama farkı
+                SKAction.wait(forDuration: waitDuration),
                 SKAction.run { [weak self] in
-                    self?.spawnFruit(on: counter, at: shelfY, zPosition: fruitZPosition) // Meyve oluştur
+                    self?.spawnFruit(on: counter, at: shelfY, zPosition: fruitZPosition)
                 },
-                SKAction.wait(forDuration: 1.5) // Yeni meyve çıkmadan önce bekleme süresi kısaltıldı (3. Meyve hızlıca gelir)
+                SKAction.wait(forDuration: 1.5)
             ])
             let repeatForever = SKAction.repeatForever(actionSequence)
             run(repeatForever)
@@ -132,50 +140,135 @@ class FruitScene: SKScene {
     }
 
     func spawnFruit(on counter: SKSpriteNode, at shelfY: CGFloat, zPosition: CGFloat) {
-        let fruitNames = ["domates", "havuç", "kiraz", "mantar", "soğan", "kabak","steak","çilek","armut","avakado","biber","brokoli","but","ekmek","elma","ekmek","karpuz","kivi","üzüm","yumurta","salatalık","portakal","muz","peynir","morSoğan","marul"] // Meyve isimleri
-        let fruitName = fruitNames.randomElement() ?? "domates" // Rastgele bir meyve seç
-        let fruit = SKSpriteNode(imageNamed: fruitName)
+        // Eğer kalan meyve yoksa listeyi tekrar başlat
+        if remainingFruits.isEmpty {
+            remainingFruits = allFruits.shuffled()
+        }
 
-        // Meyve boyutunu ayarlama (özel boyutlar için kontrol ekle)
+        // Kalan meyvelerden birini rastgele al
+        let fruitName = remainingFruits.removeFirst()
+
+        let fruit = SKSpriteNode(imageNamed: fruitName)
+        fruit.name = fruitName
+
         var fruitSize: CGSize
         switch fruitName {
         case "karpuz":
-            fruitSize = CGSize(width: counter.size.width * 0.18, height: counter.size.height * 0.2) // Karpuz biraz daha büyük
-        case "salatalık":
-            fruitSize = CGSize(width: counter.size.width * 0.2, height: counter.size.height * 0.06) // Salatalık daha küçük
+            fruitSize = CGSize(width: counter.size.width * 0.18, height: counter.size.height * 0.2)
         case "elma":
-            fruitSize = CGSize(width: counter.size.width * 0.12, height: counter.size.height * 0.12) // Elma boyutunu farklı yap
+            fruitSize = CGSize(width: counter.size.width * 0.12, height: counter.size.height * 0.12)
         case "but":
-            fruitSize = CGSize(width: counter.size.width * 0.15, height: counter.size.height * 0.15) // Elma boyutunu farklı yap
+            fruitSize = CGSize(width: counter.size.width * 0.15, height: counter.size.height * 0.15)
         case "havuç":
-            fruitSize = CGSize(width: counter.size.width * 0.13, height: counter.size.height * 0.13) // Elma boyutunu farklı yap
+            fruitSize = CGSize(width: counter.size.width * 0.13, height: counter.size.height * 0.13)
+        case "yabanMersini":
+            fruitSize = CGSize(width: counter.size.width * 0.13, height: counter.size.height * 0.13)
+        case "ananas":
+            fruitSize = CGSize(width: counter.size.width * 0.15, height: counter.size.height * 0.15)
+        case "ejderMeyvesi":
+            fruitSize = CGSize(width: counter.size.width * 0.13, height: counter.size.height * 0.13)
+        case "nar":
+            fruitSize = CGSize(width: counter.size.width * 0.17, height: counter.size.height * 0.17)
         default:
-            fruitSize = CGSize(width: counter.size.width * 0.12, height: counter.size.height * 0.12) // Diğer meyveler için standart boyut
+            fruitSize = CGSize(width: counter.size.width * 0.12, height: counter.size.height * 0.12)
         }
 
         fruit.size = fruitSize
 
-        // Meyvenin başlangıç pozisyonunu ayarla (rafın sol dışından başlayacak, biraz daha sağa kaydırıldı)
         fruit.position = CGPoint(
-            x: counter.position.x - counter.size.width / 2 - fruit.size.width + 115, // Meyvenin biraz daha sağda başlaması için 115 eklenmiş
+            x: counter.position.x - counter.size.width / 2 - fruit.size.width + 115,
             y: shelfY
         )
+        fruit.zPosition = 3
 
-        // Rafların önünde görünmesini sağlamak için meyve zPosition değerini ayarla
-        fruit.zPosition = 3 // Meyve rafların önünde olacak
-
-        // Meyveyi ekle
         addChild(fruit)
 
-        // Meyveyi sağa doğru hareket ettir (kaybolma noktası biraz daha sola kaydırıldı)
-        let moveRight = SKAction.moveBy(x: counter.size.width + fruit.size.width * 2 - 285, y: 0, duration: 4.0) // Kaybolma noktası biraz daha sola kaydırıldı
+        let moveRight = SKAction.moveBy(x: counter.size.width + fruit.size.width * 2 - 285, y: 0, duration: 4.0)
         let remove = SKAction.removeFromParent()
 
-        // Animasyon dizisi: Sağa hareket et ve kaldır
         let sequence = SKAction.sequence([moveRight, remove])
         fruit.run(sequence)
     }
 
+    func showRandomFruitInThoughtCloud() {
+        // Düşünce bulutunun içindeki tüm çocukları kaldır
+        thoughtCloudImage.removeAllChildren()
+
+        // Eğer kalan meyve yoksa listeyi tekrar başlat
+        if remainingFruits.isEmpty {
+            remainingFruits = allFruits.shuffled()
+        }
+
+        // Kalan meyvelerden bir tane al
+        currentFruitName = remainingFruits.removeFirst()
+
+        guard let fruitName = currentFruitName else { return }
+
+        // Seçilen meyve resmi oluştur
+        let fruit = SKSpriteNode(imageNamed: fruitName)
+
+        // Meyve boyutunu düşünce bulutunun boyutuna göre ayarla
+        fruit.size = CGSize(width: thoughtCloudImage.size.width * 0.2,
+                            height: thoughtCloudImage.size.height * 0.2)
+
+        // Düşünce bulutunun merkezinin biraz yukarısına yerleştir
+        fruit.position = CGPoint(x: 0, y: thoughtCloudImage.size.height * 0.1)
+
+        // Z-pozisyonunu ayarla
+        fruit.zPosition = 1
+
+        // Meyveyi düşünce bulutunun içine ekle
+        thoughtCloudImage.addChild(fruit)
+    }
+
+
+
+       func handleFruitTap(fruitName: String) {
+           if fruitName == currentFruitName {
+               // Doğru cevap
+               correctSound?.play() // Doğru sesini çal
+               showRandomFruitInThoughtCloud() // Yeni rastgele meyve göster
+           } else {
+               // Yanlış cevap
+               wrongSound?.play() // Yanlış sesini çal
+           }
+       }
+
+       func loadSounds() {
+           // Doğru sesini yükle
+           if let correctSoundURL = Bundle.main.url(forResource: "correctSound", withExtension: "mp3") {
+               correctSound = try? AVAudioPlayer(contentsOf: correctSoundURL)
+           }
+
+           // Yanlış sesini yükle
+           if let wrongSoundURL = Bundle.main.url(forResource: "wrongSound", withExtension: "mp3") {
+               wrongSound = try? AVAudioPlayer(contentsOf: wrongSoundURL)
+           }
+       }
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        let location = touch.location(in: self)
+
+        // Dokunulan nesneleri al
+        let touchedNodes = nodes(at: location)
+        for node in touchedNodes {
+            if let fruitNode = node as? SKSpriteNode, let fruitName = fruitNode.name {
+                // Meyve adı düşünce bulutundaki meyveyle aynı mı?
+                if fruitName == currentFruitName {
+                    // Doğru cevap
+                    correctSound?.play()
+                    fruitNode.removeFromParent() // Doğru meyveyi ekrandan kaldır
+                    showRandomFruitInThoughtCloud() // Yeni meyve göster
+                } else {
+                    // Yanlış cevap
+                    wrongSound?.play()
+                }
+            }
+        }
+    }
+
+   
     func createBackButton() {
         guard let view = self.view else { return }
         
