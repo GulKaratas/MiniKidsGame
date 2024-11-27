@@ -27,7 +27,7 @@ Bu proje de tasarımın birçoğu figmada yapılmıştır ve bana aittir .
   <img src="./images/minikids6.png" alt="Image 7" width="100" />
   <img src="./images/minikids7.png" alt="Image 8" width="100" />
   <img src="./images/minikids8.png" alt="Image 9" width="100" />
-   <img src="./images/minikids9..png" alt="Image 10" width="100" />
+   <img src="./images/minikids9.png" alt="Image 10" width="100" />
 </p>
 
 > Not: Fotoğraflar düzenlenme aşamasında olup, ilerleyen sürümlerde güncellenecektir.
