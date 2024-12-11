@@ -1,4 +1,3 @@
-//
 //  ColorScene.swift
 //  MiniKids
 //
@@ -10,13 +9,11 @@ import UIKit
 import SpriteKit
 
 class ColorScene: SKScene {
-    
     var backButton: UIButton!
     var draggedItem: SKSpriteNode?
     var itemStartPositions: [String: CGPoint] = [:]
     var itemStartingPositions: [String: CGPoint] = [:]
 
-    
     override func didMove(to view: SKView) {
         // Arka planı ayarla
         let background = SKSpriteNode(imageNamed: "colorBckground")
@@ -28,10 +25,36 @@ class ColorScene: SKScene {
         // Çamaşır ipini oluştur
         createClothesline()
         
-        // Sepetleri ekle
+        // Sepetleri ve kıyafetleri ekrana eklemeden önce onları gizle
         addBaskets()
+        
+        
+        // Sepetleri ve kıyafetleri sırayla göster
+        addBasketsSequentially()
+        addClothesSequentially()
+        
         createBackButton()
     }
+    
+    func addBaskets() {
+        let basketNames = ["pembeSepet", "yeşilSepet", "maviSepet"]
+        let basketSize = CGSize(width: 200, height: 140)
+        
+        let startX = size.width * 0.25
+        let spacing = size.width * 0.25
+        let yPosition = size.height * 0.27
+        
+        for (index, name) in basketNames.enumerated() {
+            let basket = SKSpriteNode(imageNamed: name)
+            basket.size = basketSize
+            basket.position = CGPoint(x: startX + CGFloat(index) * spacing, y: yPosition)
+            basket.zPosition = 3
+            basket.name = name // Sepetin adı
+            basket.alpha = 0 // Initially hide the baskets
+            addChild(basket)
+        }
+    }
+
     func addBasketsSequentially() {
         let basketNames = ["pembeSepet", "yeşilSepet", "maviSepet"]
         let basketSize = CGSize(width: 200, height: 140)
@@ -42,47 +65,53 @@ class ColorScene: SKScene {
         
         var delay: TimeInterval = 0
         for (index, name) in basketNames.enumerated() {
-            let basket = SKSpriteNode(imageNamed: name)
+            let basket = childNode(withName: name) as! SKSpriteNode
             basket.size = basketSize
-            basket.position = CGPoint(x: startX + CGFloat(index) * spacing, y: yPosition)
-            basket.zPosition = 3
-            basket.name = name // Sepetin adı
-            
             let fadeInAction = SKAction.fadeIn(withDuration: 0.5)
             let soundAction = SKAction.playSoundFileNamed("suDamlasi.mp3", waitForCompletion: false)
             let sequence = SKAction.sequence([SKAction.wait(forDuration: delay), soundAction, fadeInAction])
             basket.run(sequence)
             
-            addChild(basket)
-            
             delay += 0.5 // Increase delay for next basket
+        }
+    }
+    
+    func addClothesSequentially() {
+        let clothesImages = ["maviŞort", "pembeSweet", "yeşilAtkı"]
+        var delay: TimeInterval = 0
+        
+        for (index, imageName) in clothesImages.enumerated() {
+            if let item = childNode(withName: imageName) as? SKSpriteNode {
+                let fadeInAction = SKAction.fadeIn(withDuration: 0.5)
+                let soundAction = SKAction.playSoundFileNamed("suDamlasi.mp3", waitForCompletion: false)
+                let sequence = SKAction.sequence([SKAction.wait(forDuration: delay), soundAction, fadeInAction])
+                item.run(sequence)
+                
+                delay += 0.5 // Increase delay for next item
+            }
         }
     }
 
     func createClothesline() {
-        // Düz bir yol oluştur
         let path = UIBezierPath()
-        let startPoint = CGPoint(x: size.width * 0.1, y: size.height * 0.8) // Sol uç
-        let endPoint = CGPoint(x: size.width * 0.9, y: size.height * 0.8)   // Sağ uç
+        let startPoint = CGPoint(x: size.width * 0.1, y: size.height * 0.8)
+        let endPoint = CGPoint(x: size.width * 0.9, y: size.height * 0.8)
         
-        // Yolun başlangıç noktasına ve bitiş noktasına bir çizgi ekleyin
         path.move(to: startPoint)
         path.addLine(to: endPoint)
         
-        // Çamaşır ipini göstermek için bir SKShapeNode oluştur
         let clothesline = SKShapeNode(path: path.cgPath)
-        clothesline.strokeColor = .brown // İp rengi
+        clothesline.strokeColor = .brown
         clothesline.lineWidth = 4
         clothesline.zPosition = 1
         addChild(clothesline)
         
-        // Çamaşır askılarını ip boyunca yerleştir
         addClothesHangers(path: path)
     }
 
     func addClothesHangers(path: UIBezierPath) {
-        let numberOfHangers = 6 // Number of hangers
-        let totalSpacing = 1.0 // Total spacing along the path (0.0 - 1.0)
+        let numberOfHangers = 6
+        let totalSpacing = 1.0
         let spacing = totalSpacing / CGFloat(numberOfHangers + 1)
         let offset = spacing / 1.2
 
@@ -90,37 +119,31 @@ class ColorScene: SKScene {
         var imageIndex = 0
 
         for i in 1...numberOfHangers {
-            let t = offset + CGFloat(i - 1) * spacing // Calculate position based on the spacing and offset
+            let t = offset + CGFloat(i - 1) * spacing
             let point = pointOnBezierPath(path: path, t: t)
             
-            // Askıyı yerleştir
             let hanger = SKSpriteNode(imageNamed: "askı")
             hanger.size = CGSize(width: 20, height: 40)
             hanger.position = point
             hanger.zPosition = 3
             addChild(hanger)
             
-            // Her iki askıya kıyafet ekle
             if i % 2 == 0 {
                 let itemImage = clothesImages[imageIndex]
                 let item = SKSpriteNode(imageNamed: itemImage)
+                item.name = itemImage
                 
-                item.name = itemImage // Sepet ile eşleşecek olan isim
-                
-                // Konumu belirle
                 if itemImage == "pembeSweet" {
                     item.size = CGSize(width: 300, height: 200)
-                    item.position = CGPoint(x: point.x - 110, y: point.y - 70) // Konumu daha sola kaydır
+                    item.position = CGPoint(x: point.x - 110, y: point.y - 70)
                 } else {
                     item.size = CGSize(width: 200, height: 150)
                     item.position = CGPoint(x: point.x - 80, y: point.y - 60)
                 }
                 
                 item.zPosition = 2
-                
-                // Başlangıç pozisyonu kaydedildi
+                item.alpha = 0 // Initially hide the clothes
                 itemStartPositions[itemImage] = item.position
-                
                 addChild(item)
                 
                 imageIndex = (imageIndex + 1) % clothesImages.count
@@ -136,29 +159,11 @@ class ColorScene: SKScene {
         let start = pathElements[0]
         let end = pathElements[1]
         
-        // Lineer interpolasyon ile nokta hesaplama
         let x = (1 - t) * start.x + t * end.x
         let y = (1 - t) * start.y + t * end.y
         return CGPoint(x: x, y: y)
     }
-
-    func addBaskets() {
-        let basketNames = ["pembeSepet", "yeşilSepet", "maviSepet"]
-        let basketSize = CGSize(width: 200, height: 140)
-        
-        let startX = size.width * 0.25
-        let spacing = size.width * 0.25
-        let yPosition = size.height * 0.27
-        
-        for (index, name) in basketNames.enumerated() {
-            let basket = SKSpriteNode(imageNamed: name)
-            basket.size = basketSize
-            basket.position = CGPoint(x: startX + CGFloat(index) * spacing, y: yPosition)
-            basket.zPosition = 3
-            basket.name = name // Sepetin adı
-            addChild(basket)
-        }
-    }
+    
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
@@ -187,11 +192,11 @@ class ColorScene: SKScene {
     }
 
 
-
     func playSound(named soundName: String) {
-        // Check if the sound file exists and play it
+        
         run(SKAction.playSoundFileNamed(soundName, waitForCompletion: false))
     }
+
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first, let item = draggedItem else { return }
@@ -217,14 +222,17 @@ class ColorScene: SKScene {
                 if basket.name == "pembeSepet" && item.name == "pembeSweet" {
                     snapItemToBasket(item, basket: basket)
                     itemDroppedInCorrectBasket = true
+                    playSound(named: "pink.mp3")  // Play sound when matched
                     break
                 } else if basket.name == "maviSepet" && item.name == "maviŞort" {
                     snapItemToBasket(item, basket: basket)
                     itemDroppedInCorrectBasket = true
+                    playSound(named: "blue.mp3")  // Play sound when matched
                     break
                 } else if basket.name == "yeşilSepet" && item.name == "yeşilAtkı" {
                     snapItemToBasket(item, basket: basket)
                     itemDroppedInCorrectBasket = true
+                    playSound(named: "green.mp3")  // Play sound when matched
                     break
                 }
             }
@@ -239,15 +247,19 @@ class ColorScene: SKScene {
         draggedItem = nil
     }
 
-
-    // Kıyafeti doğru sepete yerleştir
     func snapItemToBasket(_ item: SKSpriteNode, basket: SKSpriteNode) {
+        // Check which item is being matched
+        print("Item \(item.name ?? "") placed in basket \(basket.name ?? "")")
+
         // Kıyafetin doğru sepete yerleştirildiğinde sesi çal
         if item.name == "pembeSweet" {
+            print("Playing pink sound...")
             playSound(named: "pink.mp3")
         } else if item.name == "maviŞort" {
+            print("Playing blue sound...")
             playSound(named: "blue.mp3")
         } else if item.name == "yeşilAtkı" {
+            print("Playing green sound...")
             playSound(named: "green.mp3")
         }
         

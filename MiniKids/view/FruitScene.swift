@@ -15,7 +15,7 @@ class FruitScene: SKScene {
        var wrongSound: AVAudioPlayer?
        var thoughtCloudImage: SKSpriteNode!
        var remainingFruits: [String] = [] // Kalan meyveler
-       let allFruits = ["domates", "havuç", "kiraz", "mantar", "soğan", "kabak","steak","çilek","armut","avakado","biber","brokoli","but","ekmek","elma","ekmek","karpuz","kivi","üzüm","yumurta","portakal","muz","peynir","morSoğan","marul","kabak1","lahana","kereviz","pırasa","yabanMersini","ejderMeyvesi","ananas","nar","kahvaltı","makarna","balık","köfte"]
+       let allFruits = ["domates", "havuç", "kiraz", "mantar", "soğan", "kabak","steak","çilek","armut","avakado","biber","brokoli","but","ekmek","elma","ekmek","karpuz","kivi","üzüm","yumurta","portakal","muz","peynir","morSoğan","marul","kabak1","lahana","kereviz","pırasa","yabanMersini","ejderMeyvesi","ananas","nar","kahvaltı","makarna","balik","köfte"]
 
 
     override func didMove(to view: SKView) {
