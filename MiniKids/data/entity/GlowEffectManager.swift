@@ -51,5 +51,5 @@ class GlowEffectManager {
             SKAction.removeFromParent()
         ]))
     }
-
+    
 }

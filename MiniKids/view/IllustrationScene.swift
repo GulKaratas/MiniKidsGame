@@ -16,6 +16,7 @@ import SpriteKit
 
 class IllustrationScene: SKScene {
     
+    var backButton: UIButton!
     private var selectedColor: UIColor = .white // Varsayılan renk
     private var drawingPath: CGMutablePath? // Çizim için path
     private var currentDrawingNode: SKShapeNode? // Çizim yapılan node
@@ -26,6 +27,7 @@ class IllustrationScene: SKScene {
         setupBackground()
         setupItems()
         setupDefaultColor()
+        createBackButton()
     }
     
     private func setupDefaultColor() {
@@ -179,5 +181,39 @@ class IllustrationScene: SKScene {
         case "mor": return .purple
         default: return .black
         }
+    }
+    func createBackButton() {
+        guard let view = self.view else { return }
+        
+        // Butonu başlat
+        backButton = UIButton(type: .custom)
+        
+        // Buton görselini ayarla
+        backButton.setImage(UIImage(named: "backButton"), for: .normal)
+        
+        // Buton boyutunu ayarla ve yuvarlak yap
+        backButton.frame = CGRect(x: 20, y: 20, width: 50, height: 50)
+        backButton.layer.cornerRadius = 25
+        backButton.clipsToBounds = true
+        
+        // Butona tıklama işlevi ekle
+        backButton.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
+        
+        // Butonu görünüme ekle
+        view.addSubview(backButton)
+    }
+
+    @objc func backButtonTapped() {
+        let nextScene = NextScene(size: self.size)
+        nextScene.scaleMode = .aspectFill
+        self.view?.presentScene(nextScene, transition: SKTransition.fade(withDuration: 1.0))
+        
+        // Geçiş yapıldığında butonu görünümden kaldır
+        backButton.removeFromSuperview()
+    }
+
+    override func willMove(from view: SKView) {
+        // Scene'den çıkarken butonun kaldırıldığından emin olun
+        backButton.removeFromSuperview()
     }
 }
